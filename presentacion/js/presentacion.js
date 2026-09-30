@@ -64,8 +64,14 @@
     walk(el)
   }
 
+  // Efectos de sonido anclados a la línea de tiempo de entrada de la diapositiva.
+  const sfxAt = (tl, name, at, detail) => tl.call(() => window.sfx(name, detail), null, at)
+  const sfxEach = (tl, name, at, count, each, detail) => { for (let i = 0; i < count; i++) sfxAt(tl, name, at + i * each, { index: i, ...detail }) }
+
   function counters(slide, tl, at) {
-    slide.querySelectorAll('[data-count]').forEach((el) => {
+    const items = slide.querySelectorAll('[data-count]')
+    if (items.length) sfxAt(tl, 'count', at, { duration: 1.4 })
+    items.forEach((el) => {
       const target = Number(el.dataset.count)
       const proxy = { v: 0 }
       el.textContent = '0'
@@ -81,6 +87,7 @@
       if (type === 'words') {
         splitWords(el)
         tl.fromTo(el.querySelectorAll('.word'), { yPercent: 115, rotation: 6, autoAlpha: 0 }, { yPercent: 0, rotation: 0, autoAlpha: 1, duration: 0.9, ease: 'power4.out', stagger: 0.045 }, t)
+        sfxAt(tl, 'title', t, { words: el.querySelectorAll('.word').length })
         t += 0.35
       } else if (type === 'up') {
         tl.fromTo(el, { autoAlpha: 0, y: 36 }, { autoAlpha: 1, y: 0, duration: 0.8, ease: 'power3.out' }, t)
@@ -89,11 +96,14 @@
         tl.fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: 1 }, t + 0.6)
       } else if (type === 'scale') {
         tl.fromTo(el, { autoAlpha: 0, scale: 0.7, rotation: -4 }, { autoAlpha: 1, scale: 1, rotation: 0, duration: 0.9, ease: 'back.out(1.8)' }, t + 0.2)
+        sfxAt(tl, 'impact', t + 0.25)
       } else if (type === 'stagger') {
         tl.fromTo(el.children, { autoAlpha: 0, y: 34, scale: 0.97 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.7, ease: 'power3.out', stagger: 0.1 }, t)
+        sfxEach(tl, 'tick', t + 0.05, el.children.length, 0.1)
         t += 0.2
       } else if (type === 'flip') {
         tl.fromTo(el.children, { autoAlpha: 0, rotationY: -75, rotationX: 10, transformOrigin: '0% 50%', z: -120 }, { autoAlpha: 1, rotationY: 0, rotationX: 0, z: 0, duration: 1.1, ease: 'power3.out', stagger: 0.14 }, t + 0.1)
+        sfxEach(tl, 'flip', t + 0.15, el.children.length, 0.14)
       }
     })
     counters(slide, tl, 0.6)
@@ -107,6 +117,9 @@
       tl.fromTo(slide.querySelectorAll('.orbit'), { scale: 0.6, autoAlpha: 0 }, { scale: 1, autoAlpha: 1, duration: 1.6, ease: 'expo.out', stagger: 0.15 }, 0.1)
       tl.fromTo(slide.querySelectorAll('.float-chip'), { autoAlpha: 0, scale: 0.6, y: 30 }, { autoAlpha: 1, scale: 1, y: 0, duration: 0.8, ease: 'back.out(2)', stagger: 0.25 }, 1.1)
       tl.fromTo(slide.querySelector('.sparkle'), { autoAlpha: 0, scale: 0, rotation: -180 }, { autoAlpha: 1, scale: 1, rotation: 0, duration: 1.2, ease: 'back.out(2)' }, 1.3)
+      sfxEach(tl, 'swoosh', 0.2, shots.length, 0.18)
+      sfxEach(tl, 'pop', 1.15, 3, 0.25)
+      sfxAt(tl, 'sparkle', 1.4)
       ambient.push(
         gsap.to(slide.querySelector('.orbit-2'), { rotation: 360, duration: 40, ease: 'none', repeat: -1 }),
         gsap.to(slide.querySelector('.sparkle'), { rotation: '+=90', scale: 1.15, duration: 3, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: 2.5 }),
@@ -126,6 +139,10 @@
       tl.fromTo(slide.querySelectorAll('.hub-node'), { scale: 0, autoAlpha: 0 }, { scale: 1, autoAlpha: 1, duration: 0.8, ease: 'back.out(2)', stagger: 0.15 }, 1.5)
       gsap.set(slide.querySelectorAll('.hub-sat'), { xPercent: -50, yPercent: -50 })
       tl.fromTo(slide.querySelectorAll('.hub-sat'), { autoAlpha: 0, scale: 0.6 }, { autoAlpha: 1, scale: 1, duration: 0.6, ease: 'back.out(2)', stagger: 0.1 }, 1.9)
+      sfxAt(tl, 'impact', 0.45)
+      sfxAt(tl, 'draw', 0.9, { duration: 1.6 })
+      sfxEach(tl, 'pop', 1.55, 3, 0.15)
+      sfxEach(tl, 'tick', 1.95, 4, 0.1)
       ambient.push(gsap.fromTo(slide.querySelector('.hub-ring'), { scale: 1, autoAlpha: 0.9 }, { scale: 1.35, autoAlpha: 0, duration: 2.2, ease: 'power1.out', repeat: -1, delay: 1.4 }))
 
       const hub = slide.querySelector('.hub')
@@ -162,20 +179,26 @@
       const nodes = slide.querySelectorAll('.fnode')
       tl.fromTo(nodes, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.6, ease: 'power3.out', stagger: 0.22 }, 0.7)
       tl.fromTo(slide.querySelectorAll('.fdot'), { scale: 0, rotation: -60 }, { scale: 1, rotation: 0, duration: 0.7, ease: 'back.out(2.4)', stagger: 0.22 }, 0.7)
+      sfxAt(tl, 'draw', 0.7, { duration: 2 })
+      sfxEach(tl, 'pop', 0.8, nodes.length, 0.22)
       const dots = [...slide.querySelectorAll('.fnode .fdot')]
       ambient.push(gsap.to(dots, { keyframes: { scale: [1, 1.1, 1] }, duration: 0.6, ease: 'sine.inOut', stagger: { each: 0.35, repeat: -1, repeatDelay: dots.length * 0.35 }, delay: 3 }))
     },
 
     impacto(slide, tl) {
       tl.call(() => window.Graficos.impacto(), null, 0.5)
+      sfxAt(tl, 'chart', 0.5, { duration: 1.6 })
     },
 
     plan(slide, tl) {
       tl.call(() => window.Graficos.plan(), null, 0.6)
+      sfxEach(tl, 'tick', 0.6, 8, 0.16)
+      sfxAt(tl, 'success-soft', 2.1)
     },
 
     siguiente(slide, tl) {
       tl.fromTo(slide.querySelectorAll('.nstep span'), { scale: 0, rotation: -90 }, { scale: 1, rotation: 0, duration: 0.7, ease: 'back.out(2.5)', stagger: 0.12 }, 1.1)
+      sfxEach(tl, 'pop', 1.15, 3, 0.12)
       ambient.push(gsap.to('#btnAccept', { boxShadow: '0 0 0 12px rgba(198, 226, 127, 0.45), 0 14px 30px -14px rgba(38, 76, 60, .9)', duration: 1.1, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: 2 }))
     },
   }
@@ -193,6 +216,7 @@
     const next = slides[to]
     const dir = to > index ? 1 : -1
     busy = true
+    if (from) window.sfx('whoosh', { dir })
 
     ambient.forEach((a) => a.kill())
     ambient = []
@@ -322,6 +346,8 @@
   document.getElementById('btnAccept').addEventListener('click', (e) => {
     const btn = e.currentTarget
     confetti()
+    window.sfx('click')
+    window.sfx('confetti')
     btn.innerHTML = '<svg><use href="#i-check-circle"/></svg> Propuesta aceptada'
     gsap.fromTo(btn, { scale: 0.92 }, { scale: 1, duration: 0.6, ease: 'elastic.out(1, 0.4)' })
     const thanks = document.getElementById('thanks')

@@ -335,9 +335,15 @@
 
   Builder.prototype.wait = function (s) { this.t += s }
 
+  // Programa un efecto de sonido en la línea de tiempo del paso (no se dispara al saltar con la barra).
+  Builder.prototype.sfx = function (name, at = this.t, detail = {}) {
+    this.st.call(() => window.sfx(name, detail), null, at)
+  }
+
   Builder.prototype.move = function (key, fx = 0.5, dy = 0) {
     const p = this.point(key, fx)
     if (!p) return
+    this.sfx('move', this.t, { duration: 0.9 })
     this.st.to(els.cursor, { left: `${p.x}%`, top: `${p.y + dy}%`, duration: 0.9, ease: 'power2.inOut' }, this.t)
     this.t += 0.95
   }
@@ -349,6 +355,7 @@
     const ripple = this.el('ripple')
     gsap.set(ripple, { left: `${p.x}%`, top: `${p.y}%` })
     this.st.to(els.cursor, { scale: 0.8, duration: 0.12, yoyo: true, repeat: 1, ease: 'power1.inOut' }, this.t)
+    this.sfx('click', this.t + 0.05)
     this.st.fromTo(ripple, { autoAlpha: 0.95, scale: 0.3 }, { autoAlpha: 0, scale: 1.9, duration: 0.7, ease: 'power2.out', immediateRender: false }, this.t + 0.05)
     this.t += 0.45
   }
@@ -363,6 +370,7 @@
     this.avoid.push(rect)
     gsap.set(box, { left: `${rect.x}%`, top: `${rect.y}%`, width: `${rect.w}%`, height: `${rect.h}%` })
     this.st.fromTo(box, { autoAlpha: 0, scale: 1.12 }, { autoAlpha: 1, scale: 1, duration: 0.5, ease: 'back.out(2)' }, this.t)
+    this.sfx('highlight')
     this.fx.push(box)
     this.t += 0.5
   }
@@ -376,6 +384,7 @@
     gsap.set(node, { left: `${b.x}%`, top: `${b.y}%`, width: `${b.w}%`, height: `${b.h}%` })
     const proxy = { n: 0 }
     this.st.set(node, { autoAlpha: 1 }, this.t)
+    this.sfx('type', this.t, { chars: text.length, duration: Math.min(1.4, text.length * 0.06) })
     this.st.fromTo(proxy, { n: 0 }, {
       n: text.length, duration: Math.min(1.4, text.length * 0.06), ease: 'none',
       onUpdate: () => { node.firstChild ? (node.firstChild.nodeValue = text.slice(0, Math.round(proxy.n))) : node.appendChild(document.createTextNode(text.slice(0, Math.round(proxy.n)))) },
@@ -392,6 +401,7 @@
     gsap.set(mark, { left: `${x}%`, top: `${p.y}%`, xPercent: -50, yPercent: -50 })
     this.st.to(els.cursor, { left: `${x}%`, top: `${p.y}%`, duration: 0.8, ease: 'power2.inOut' }, this.t)
     this.st.fromTo(mark, { autoAlpha: 0, scale: 0 }, { autoAlpha: 1, scale: 1, duration: 0.35, ease: 'back.out(3)' }, this.t + 0.85)
+    this.sfx('check', this.t + 0.85)
     this.fx.push(mark)
     this.t += 1.3
   }
@@ -401,12 +411,14 @@
     if (!p) return
     this.st.set(els.zoom, { transformOrigin: `${p.x}% ${p.y + dy}%` }, this.t)
     this.st.to(els.zoom, { scale, duration: 1.1, ease: 'power3.inOut' }, this.t)
+    this.sfx('zoom-in')
     this.zoomed = true
     this.t += 0.9
   }
 
   Builder.prototype.unzoom = function () {
     this.st.to(els.zoom, { scale: 1, duration: 0.9, ease: 'power3.inOut' }, this.t)
+    this.sfx('zoom-out')
     this.zoomed = false
     this.t += 0.7
   }
@@ -420,6 +432,7 @@
     const slot = this.toasts.filter((t) => t.end > start).length
     this.toasts.push({ end: start + hold })
     this.st.fromTo(node, { autoAlpha: 0, x: 40, y: slot * 76, scale: 0.96 }, { autoAlpha: 1, x: 0, scale: 1, duration: 0.5, ease: 'back.out(1.6)' }, start)
+    this.sfx('toast', start, { kind })
     this.st.to(node, { autoAlpha: 0, x: 20, duration: 0.4, ease: 'power2.in' }, start + hold)
     this.feed.push({ at: start, icon, title, sub, kind })
     this.t += 0.6
@@ -431,6 +444,7 @@
     gsap.set(node, { left: `${x}%`, top: `${y}%`, xPercent: -50, yPercent: -50 })
     this.st.fromTo(node, { autoAlpha: 0, scale: 2.4, rotation: -22 }, { autoAlpha: 1, scale: 1, rotation: -8, duration: 0.55, ease: 'back.out(2.2)' }, this.t)
     this.st.to(els.screen, { keyframes: { x: [0, -6, 6, -4, 4, 0] }, duration: 0.35, ease: 'none' }, this.t + 0.4)
+    this.sfx('stamp', this.t + 0.3, { kind: kind || 'ok' })
     this.fx.push(node)
     this.t += 0.9
   }
@@ -438,6 +452,7 @@
   Builder.prototype.envelopes = function (key) {
     const p = this.point(key)
     if (!p) return
+    this.sfx('send', this.t + 0.2)
     for (let i = 0; i < 9; i++) {
       const env = this.el('envelope', '<svg><use href="#i-mail"/></svg>')
       const r1 = ((i * 37) % 10) / 10
@@ -452,6 +467,7 @@
 
   Builder.prototype.scan = function () {
     const scan = this.el('scan')
+    this.sfx('scan', this.t, { duration: 1.8 })
     this.st.fromTo(scan, { autoAlpha: 1, top: '55%' }, { top: '88%', duration: 0.9, ease: 'sine.inOut', yoyo: true, repeat: 1, immediateRender: false }, this.t)
     this.st.to(scan, { autoAlpha: 0, duration: 0.3 }, this.t + 1.8)
     this.t += 2
@@ -467,6 +483,8 @@
     const proxy = { v: 0 }
     this.st.fromTo(node, { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.35 }, this.t)
     this.st.fromTo(proxy, { v: 0 }, { v: 100, duration: 1.5, ease: 'power1.inOut', onUpdate: () => { fill.style.width = `${proxy.v}%`; pct.textContent = `${Math.round(proxy.v)}%` } }, this.t + 0.3)
+    this.sfx('upload', this.t + 0.3, { duration: 1.5 })
+    this.sfx('done', this.t + 1.8)
     this.fx.push(node)
     this.t += 1.9
   }
@@ -477,6 +495,7 @@
     const node = this.el('badge-new', text)
     gsap.set(node, { left: `${p.x + 1}%`, top: `${p.y - 0.5}%` })
     this.st.fromTo(node, { autoAlpha: 0, scale: 0 }, { autoAlpha: 1, scale: 1, duration: 0.4, ease: 'back.out(3)' }, this.t)
+    this.sfx('pop')
     this.st.to(node, { scale: 1.12, duration: 0.4, yoyo: true, repeat: 3, ease: 'sine.inOut' }, this.t + 0.4)
     this.fx.push(node)
     this.t += 0.5
@@ -486,6 +505,7 @@
     const p = this.point(key)
     if (!p) return
     const colors = ['#c6e27f', '#264c3c', '#a9cf5a', '#9c8fd0', '#f6c96b']
+    this.sfx('sparkle')
     for (let i = 0; i < 26; i++) {
       const dot = this.el('ripple')
       const angle = (i / 26) * Math.PI * 2
@@ -539,13 +559,16 @@
         st.set(imgs[i - 1], { autoAlpha: 0 }, 0.45)
         st.set(imgs[i], { autoAlpha: 1, scale: 1, filter: 'blur(0px)' }, 0.45)
         st.to(wipe, { xPercent: 101, duration: 0.55, ease: 'power3.out' }, 0.95)
+        st.call(() => window.sfx('wipe', { view: step.view }), null, 0)
         t0 = 1.2
       } else {
         if (prev) st.to(imgs[i - 1], { autoAlpha: 0, duration: 0.5 }, 0)
         st.fromTo(imgs[i], { autoAlpha: 0, scale: 1.035, filter: 'blur(8px)' }, { autoAlpha: 1, scale: 1, filter: 'blur(0px)', duration: 0.8, ease: 'power2.out' }, 0)
+        st.call(() => window.sfx('screen'), null, 0)
         t0 = 0.6
       }
       st.fromTo(els.caption, { autoAlpha: 0, y: 18 }, { autoAlpha: 1, y: 0, duration: 0.55, ease: 'power3.out' }, t0 - 0.2)
+      st.call(() => window.sfx('caption'), null, t0 - 0.2)
 
       const b = new Builder(st, step, i)
       b.t = t0 + 0.3
@@ -716,6 +739,7 @@
     gsap.to(els.end, { autoAlpha: 1, duration: 0.6 })
     gsap.fromTo(els.end.querySelector('.endcard-inner'), { y: 30, scale: 0.96 }, { y: 0, scale: 1, duration: 0.7, ease: 'back.out(1.6)' })
     gsap.fromTo(els.end.querySelector('.end-icon'), { scale: 0, rotation: -90 }, { scale: 1, rotation: 0, duration: 0.8, delay: 0.2, ease: 'back.out(2.5)' })
+    window.sfx('success')
   }
 
   function hideEnd() {

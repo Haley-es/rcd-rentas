@@ -1,4 +1,4 @@
-# Presentación comercial · Renta y Modelo 720
+﻿# Presentación comercial · Renta y Modelo 720
 
 Web estática e independiente para presentar la propuesta a RCD. No necesita servidor, build ni conexión: abre [index.html](index.html) en el navegador (Chrome o Edge recomendados) y pulsa `F` para pantalla completa.
 
@@ -34,6 +34,8 @@ Se puede abrir directamente una sección con el ancla, por ejemplo `index.html#d
 - [js/demo.js](js/demo.js): guion de la demo sobre una línea de tiempo GSAP (pausa, salto y reinicio).
 - [js/graficos.js](js/graficos.js): gráficos de impacto y plan.
 - [js/fondo.js](js/fondo.js): fondo animado.
+- [js/sonido.js](js/sonido.js): eventos de efectos de sonido para el grabador de vídeo.
+- [video](video): grabador del vídeo y sintetizador de audio.
 - [capturas](capturas): pantallas reales del prototipo y `puntos.js` con la posición de cada elemento que señala el cursor.
 - [vendor](vendor): GSAP 3.13 y Chart.js 4.5 locales, para funcionar sin conexión.
 
@@ -48,3 +50,20 @@ node presentacion\capturar.mjs
 El script inicia sesión con valores ficticios, recorre las pantallas sin cambiar datos, guarda las imágenes y regenera `capturas/puntos.js`. Para otra URL usa la variable `PRESENTACION_BASE_URL`.
 
 Los datos, importes y cifras de impacto son ilustrativos y deben validarse con RCD.
+
+## Vídeo con efectos de sonido
+
+[video/grabar.mjs](video/grabar.mjs) graba la presentación completa en dos versiones: `video/propuesta-rcd.mp4` (efectos y música de fondo) y `video/propuesta-rcd-onlyfx.mp4` (solo efectos, sin música). Ambas en 1920×1080, 30 fps, H.264 + AAC, unos 3:40 minutos): portada, contexto, demo entera, reglas, impacto, hoja de ruta y aceptación con confeti.
+
+```powershell
+# Requiere ffmpeg con libx264 en el PATH, o su ruta en FFMPEG_PATH.
+node presentacion\video\grabar.mjs
+```
+
+- La página corre con el reloj simulado de Playwright: el tiempo avanza exactamente 1/30 s por fotograma, así que el vídeo sale fluido aunque la captura sea lenta (unos 35–40 minutos de grabación).
+- La presentación emite eventos `sfx` ([js/sonido.js](js/sonido.js)) en cada clic, tecleo, sello, aviso, zoom, cambio de vista o diapositiva, gráfico y celebración. El grabador guarda su instante exacto.
+- [video/sonido.mjs](video/sonido.mjs) sintetiza por código todos los efectos y un fondo musical ambiental con reverberación y atenuación automática bajo los efectos. No usa muestras externas, así que no hay derechos de terceros.
+- Variables opcionales: `VIDEO_OUT` (ruta de la versión con música; la de solo efectos se nombra igual con `-onlyfx`), `VIDEO_FPS`, `VIDEO_KEEP_TMP=1` para conservar vídeo mudo, WAV y eventos en `video/.tmp`, y `VIDEO_REUTILIZAR=1` para regenerar solo el audio de ambas versiones a partir del `propuesta-rcd.mp4` existente (unos 3 minutos, sin capturar fotogramas).
+- Los MP4 están excluidos de Git en [video/.gitignore](video/.gitignore).
+
+La presentación en el navegador sigue sin sonido; los eventos solo los usa el grabador.
