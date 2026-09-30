@@ -129,5 +129,6 @@ Fechas, checklists, tarifas y estructura del Excel son ilustrativos. Las plantil
 - [PRDs](docs/prds): requisitos derivados de las fuentes, con trazabilidad y criterios de aceptación.
 - [Tests unitarios](tests/unit/workflow.test.ts) y [E2E](tests/e2e/app.spec.ts): umbrales exactos, aislamiento, bloqueos, versionado, carga documental, ramas fiscales y responsive móvil.
 - [Presentación comercial](presentacion/README.md): web estática independiente con demo animada del ciclo completo sobre capturas del prototipo.
+- [Landing para clientes](landing/README.md): web estática independiente para que los clientes de RCD contraten la Renta y el Modelo 720, con test orientativo del 720 y formulario de solicitud (sin envío real).
 
 Los módulos implementados se trasladan de [todo](docs/prds/todo) a [done](docs/prds/done) después de validar sus recorridos de mockup. «Done» describe el prototipo, no una integración o servicio real.
