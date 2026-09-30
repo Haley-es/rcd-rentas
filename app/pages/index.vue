@@ -1,0 +1,29 @@
+<script setup lang="ts">
+import { money } from '../utils/format'
+import { nextTask } from '../utils/workflow'
+const { cases, today } = useMockApp()
+const campaign = ref('Todas')
+const selected = computed(() => cases.value.filter(item => campaign.value === 'Todas' || item.campaign === campaign.value))
+const active = computed(() => selected.value.filter(item => item.opened && item.tax.state !== 'Cerrado' && item.contact !== 'Retirado'))
+const closed = computed(() => selected.value.filter(item => item.tax.state === 'Cerrado').length)
+const docs = computed(() => active.value.filter(item => item.portalSent && !item.docsComplete).length)
+const revenue = computed(() => selected.value.filter(item => item.invoice.number).reduce((total, item) => total + item.invoice.amount, 0))
+const urgent = computed(() => active.value.filter(item => ['Incidencia', 'No apto'].includes(item.pbc) || item.extraction.state === 'Incidencia IT' || ['Rechazada', 'En revisión'].includes(item.ph.state)))
+const steps = computed(() => [
+  { label: 'Propuesta y firma', count: active.value.filter(item => !['Firmada', 'No necesaria'].includes(item.ph.state)).length, color: '#c2d6c9' },
+  { label: 'Validaciones y alta', count: active.value.filter(item => ['Firmada', 'No necesaria'].includes(item.ph.state) && !item.portalSent).length, color: '#96b9a2' },
+  { label: 'Documentación', count: active.value.filter(item => item.portalSent && !item.docsComplete).length, color: '#638b74' },
+  { label: 'Preparación y presentación', count: active.value.filter(item => item.docsComplete && item.tax.state !== 'Presentado').length, color: '#365e49' },
+  { label: 'Facturación y cierre', count: active.value.filter(item => item.tax.state === 'Presentado').length, color: '#b9d985' },
+])
+</script>
+
+<template>
+  <section>
+    <div class="page-heading"><div><p class="eyebrow">TU CAMPAÑA, DE UN VISTAZO</p><h1>Vista general<span class="heading-dot">.</span></h1><p>Menos seguimiento. Más tiempo para tus clientes.</p></div><div class="heading-actions"><SelectButton v-model="campaign" :options="['Todas', 'Renta', '720']" :allow-empty="false" aria-label="Campaña" /><NuxtLink to="/expedientes" class="primary-link"><i class="pi pi-folder-open" aria-hidden="true" />Ver expedientes</NuxtLink></div></div>
+    <div class="welcome-banner"><div><span class="banner-label">CAMPAÑAS 2025</span><h2>Una visión compartida.<br>De principio a fin.</h2><p>Renta y Modelo 720, conectados con tu equipo y tus clientes.</p><NuxtLink to="/tareas">Revisar tareas pendientes<i class="pi pi-arrow-right" aria-hidden="true" /></NuxtLink></div><div class="banner-art" aria-hidden="true"><div class="art-orbit" /><div class="art-card art-back"><i class="pi pi-file" /><span>Modelo 720</span><div class="art-lines" /></div><div class="art-card art-front"><div class="art-check"><i class="pi pi-check" /></div><strong>Todo en su lugar</strong><span>Una campaña más sencilla</span><div class="art-progress"><span /></div></div><span class="art-spark">✳</span></div></div>
+    <div class="stats-grid"><div class="stat-card"><div class="stat-top">Expedientes activos<i class="pi pi-folder mint-icon" /></div><strong>{{ active.length }}<span class="stat-unit"> / {{ selected.length }}</span></strong><small>Clientes dentro de campaña</small></div><div class="stat-card"><div class="stat-top">Pendientes de documentación<i class="pi pi-file amber-icon" /></div><strong>{{ docs }}</strong><small>Entrega o revisión en curso</small></div><div class="stat-card"><div class="stat-top">Expedientes cerrados<i class="pi pi-check-circle mint-icon" /></div><strong>{{ closed }}<span class="stat-unit"> · {{ Math.round(closed / (selected.length || 1) * 100) }}%</span></strong><small>Presentación y factura completadas</small></div><div class="stat-card"><div class="stat-top">Facturación emitida<i class="pi pi-wallet lavender-icon" /></div><strong>{{ money(revenue) }}</strong><small>Importes ficticios · No indica cobro</small></div></div>
+    <div class="dashboard-grid"><section class="panel"><div class="panel-heading"><div><h2>Estado de la campaña</h2><p>Distribución de expedientes activos</p></div><span class="soft-label">{{ active.length }} activos</span></div><div class="pipeline"><span v-for="step in steps" :key="step.label" :style="{ flex: Math.max(step.count, 0.2), background: step.color }" :title="`${step.label}: ${step.count}`" /></div><div class="pipeline-legend"><div v-for="step in steps" :key="step.label"><span class="legend-dot" :style="{ background: step.color }" /><span>{{ step.label }}</span><strong>{{ step.count }}</strong></div></div><div class="panel-note"><i class="pi pi-info-circle" aria-hidden="true" />Comunicación, validaciones y negocio conservan estados independientes.</div></section><section class="panel attention-panel"><div class="panel-heading"><div><h2>Necesitan tu atención</h2><p>Desbloquea el siguiente paso</p></div><span class="attention-count">{{ urgent.length }}</span></div><NuxtLink v-for="item in urgent.slice(0, 3)" :key="item.id" :to="`/expedientes/${item.id}`" class="attention-item"><span class="attention-icon"><i :class="item.extraction.state === 'Incidencia IT' ? 'pi pi-code' : 'pi pi-clock'" /></span><div><strong>{{ item.name }}</strong><span>{{ nextTask(item, today) }}</span></div><i class="pi pi-angle-right" /></NuxtLink><p v-if="!urgent.length" class="empty-note">Sin bloqueos en esta campaña.</p><NuxtLink to="/tareas" class="text-link">Ver todas las tareas<i class="pi pi-arrow-right" /></NuxtLink></section></div>
+    <section class="panel table-panel"><div class="panel-heading"><div><h2>Expedientes en curso</h2><p>Los próximos pasos, siempre a mano</p></div><NuxtLink to="/expedientes" class="text-link">Ver todos<i class="pi pi-arrow-right" /></NuxtLink></div><CaseTable :items="active.slice(0, 5)" compact /></section>
+  </section>
+</template>
