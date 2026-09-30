@@ -189,7 +189,7 @@ export function runAction(item: CaseFile, action: WorkflowAction, role: Role, no
       if (item.tax.state !== 'Pendiente' && item.tax.state !== 'Presentado') { item.tax.state = 'Cambios solicitados'; item.tax.acceptedVersion = null }
       if (item.tax.state !== 'Presentado') { item.extraction.state = 'Pendiente'; item.extraction.criteriaVersion = undefined }
       item.docsRequestedAt = now; item.docsReminderKey = undefined
-      text = `${action.kind} v${version} incorporado; solo metadatos locales, pendiente de entrega y revisión.`
+      text = `${action.kind} v${version} incorporado; pendiente de entrega y revisión humana.`
       break
     }
     case 'deliver-documents':

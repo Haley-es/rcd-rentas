@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model PrototypeInstallation {
+  id            Int      @id
+  schemaVersion Int
+  initializedAt DateTime @default(now())
+}
+
+model PrototypeState {
+  id            Int      @id
+  revision      Int
+  datasetId     String   @db.UniqueIdentifier
+  schemaVersion Int
+  payload       String   @db.NVarChar(Max)
+  updatedAt     DateTime @updatedAt
+  files         PrototypeFile[]
+}
+
+model PrototypeFile {
+  id              String   @id @db.UniqueIdentifier
+  stateId         Int      @default(1)
+  state           PrototypeState @relation(fields: [stateId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  datasetId       String   @db.UniqueIdentifier
+  caseId          String   @db.NVarChar(200)
+  category        String   @db.VarChar(20)
+  anchor          String   @db.NVarChar(400)
+  documentId      String?  @db.NVarChar(200)
+  documentVersion Int?
+  originalName    String   @db.NVarChar(255)
+  mimeType        String   @db.VarChar(120)
+  size            Int
+  sha256          String   @db.Char(64)
+  storageKey      String   @unique @db.VarChar(90)
+  source          String   @db.VarChar(20)
+  createdAt       DateTime @default(now())
+  uploadedBy      String   @db.NVarChar(Max)
+
+  @@unique([datasetId, caseId, category, anchor])
+  @@index([datasetId, caseId])
+}

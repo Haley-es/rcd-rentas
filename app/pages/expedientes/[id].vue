@@ -3,21 +3,48 @@ import type { ActionResult, AssetRow, WorkflowAction } from '../../types/domain'
 import { documentKinds } from '../../types/domain'
 import { dateLabel, initials, money, stage, statusSeverity } from '../../utils/format'
 import { currentDocuments, missingKinds, nextTask, requiredKinds } from '../../utils/workflow'
-import { downloadDemo } from '../../utils/download'
+import type { PrototypeFileCategory } from '../../../shared/types/prototype-files'
 
 const route = useRoute()
-const { cases, role, today, act } = useMockApp()
+const { cases, role, today, act, pending, synchronized, revision, files, uploadDocument, downloadFile } = useMockApp()
 const expediente = computed(() => cases.value.find(item => item.id === route.params.id))
 if (!expediente.value) throw createError({ statusCode: 404, statusMessage: 'Expediente no encontrado' })
-const item = computed(() => expediente.value!)
+const initialItem = expediente.value
+const item = computed(() => expediente.value ?? initialItem)
 const tab = ref('ph')
 const feedback = ref<ActionResult | null>(null)
 const fileKind = ref('DNI anverso')
+const localFile = ref<File | null>(null)
+const localInput = ref<HTMLInputElement | null>(null)
+const confirmedReplacement = ref(false)
+function chooseLocalFile(event: Event) {
+  const input = event.target
+  if (!(input instanceof HTMLInputElement)) return
+  localFile.value = input.files?.[0] ?? null
+  confirmedReplacement.value = false
+  input.value = ''
+}
+async function confirmUpload() {
+  if (!localFile.value) return
+  if (item.value.documents.some(doc => doc.kind === fileKind.value) && !confirmedReplacement.value) {
+    feedback.value = { ok: false, message: 'Confirma expresamente la nueva versión; conserva historial e invalida revisión.' }
+    return
+  }
+  feedback.value = await uploadDocument(item.value.id, localFile.value, fileKind.value, false)
+  if (feedback.value.ok) localFile.value = null
+}
 const dniUntil = ref(item.value.identity.dniValidUntil ?? '')
 watch(() => item.value.identity.dniValidUntil, value => { dniUntil.value = value ?? '' })
 const rows = ref<AssetRow[]>(item.value.extraction.rows.map(row => ({ ...row })))
-watch(() => item.value.extraction.rows, value => { rows.value = value.map(row => ({ ...row })) })
-const readonly = computed(() => item.value.tax.state === 'Cerrado' || ['Retirado', 'No interesado'].includes(item.value.contact))
+const rowsBaseline = ref(JSON.stringify(rows.value))
+const rowsStale = ref(false)
+watch(() => item.value.extraction.rows, value => {
+  if (JSON.stringify(rows.value) !== rowsBaseline.value) { rowsStale.value = true; return }
+  rows.value = value.map(row => ({ ...row }))
+  rowsBaseline.value = JSON.stringify(rows.value)
+})
+function rebaseRows() { rowsStale.value = false; rowsBaseline.value = JSON.stringify(rows.value) }
+const readonly = computed(() => pending.value || !synchronized.value || item.value.tax.state === 'Cerrado' || ['Retirado', 'No interesado'].includes(item.value.contact))
 type Modal = 'ph-approve' | 'ph-changes' | 'ph-edit' | 'pbc-apt' | 'pbc-issue' | 'pbc-no' | 'nav' | 'prior' | 'doc-reject' | 'criteria' | 'present' | 'invoice' | 'it-report' | 'it-resolve' | 'call' | 'assign' | 'nav-info'
 const modal = ref<Modal | null>(null)
 const note = ref('')
@@ -38,15 +65,23 @@ const needsNote = computed(() => modal.value && ['ph-approve', 'ph-changes', 'ph
 const needsReference = computed(() => modal.value && ['nav', 'criteria', 'present', 'invoice'].includes(modal.value))
 const needsDate = computed(() => modal.value === 'criteria' || modal.value === 'present')
 
-function perform(action: WorkflowAction) {
-  const result = act(item.value.id, action)
+async function perform(action: WorkflowAction) {
+  if (action.type === 'extraction-review' && rowsStale.value) {
+    feedback.value = { ok: false, message: 'Edición obsoleta conservada. Revisa y confirma la edición antes de validar.' }
+    return false
+  }
+  const before = revision.value
+  const result = await act(item.value.id, action)
   feedback.value = result
+  if (!result.ok && action.type === 'extraction-review' && revision.value !== before) rowsStale.value = true
+  if (result.ok && action.type === 'extraction-review') { rowsBaseline.value = JSON.stringify(rows.value); rowsStale.value = false }
   return result.ok
 }
 function open(mode: Modal, id = '') {
   modal.value = mode; note.value = ''; reference.value = ''; fee.value = item.value.fee; actionDate.value = today.value; docId.value = id; owner.value = item.value.owner
 }
-function submit() {
+async function submit() {
+  if (pending.value || !synchronized.value) return
   let action: WorkflowAction
   switch (modal.value) {
     case 'ph-approve': action = { type: 'ph-review', approve: true, note: note.value }; break
@@ -67,17 +102,32 @@ function submit() {
     case 'assign': action = { type: 'assign', owner: owner.value }; break
     default: return
   }
-  if (perform(action)) modal.value = null
+  if (await perform(action)) modal.value = null
 }
-function demoDocument() { perform({ type: 'add-document', kind: fileKind.value, name: `${fileKind.value.toLowerCase().replaceAll(' ', '-')}-demo.pdf`, size: 120000 }) }
-function phDownload() { downloadDemo(`PH-${item.value.id}-v${item.value.ph.version}-DEMO.txt`, `DOCUMENTO FICTICIO · SIN VALIDEZ\nPropuesta ${item.value.id} v${item.value.ph.version}\nCliente: ${item.value.name}\nAlcance: ${item.value.campaign} 2025, ${item.value.rentaType}, presentación ${item.value.presenter}\nHonorarios ilustrativos: ${money(item.value.fee)}\nCláusula de autorización de ejemplo; solo es efectiva tras validación independiente.\nEstado: ${item.value.ph.state}\n${item.value.ph.note}`) }
-function excelDownload() { downloadDemo(`Excel-720-${item.value.id}-v${item.value.extraction.version ?? 1}-DEMO.csv`, '\uFEFFDEMO;NO ES XLSX NI IMPORTABLE EN CRITERIA\nOrigen;Entidad;País;Tipo;Valor ficticio;Observación\n' + rows.value.map(row => [row.origin, row.entity, row.country, row.category, row.value, row.observation].map(value => `"${String(value ?? '').replaceAll('"', '""')}"`).join(';')).join('\n'), 'text/csv;charset=utf-8') }
-function receiptDownload() { downloadDemo(`Justificante-${item.value.id}-DEMO.txt`, `JUSTIFICANTE FICTICIO · SIN VALIDEZ FISCAL\n${item.value.tax.receipt}\nFecha demo: ${item.value.tax.presentationDate ?? today.value}\nNinguna presentación real realizada.`) }
-function invoiceDownload() { downloadDemo(`Factura-${item.value.id}-DEMO.txt`, `FACTURA FICTICIA · SIN VALIDEZ CONTABLE\n${item.value.invoice.number}\nImporte ilustrativo ${money(item.value.invoice.amount)}\nCobro no confirmado.`) }
+function demoDocument() { localInput.value?.click() }
+async function artifactDownload(category: PrototypeFileCategory) {
+  const file = files.value.findLast(file => file.caseId === item.value.id && file.category === category)
+  feedback.value = file ? await downloadFile(file, false) : { ok: false, message: 'Histórico sin archivo disponible. Prepara explícitamente las muestras TXT/CSV actuales; no se reconstruyen originales.' }
+}
+const phDownload = () => artifactDownload('ph')
+const excelDownload = () => artifactDownload('extraction')
+const receiptDownload = () => artifactDownload('receipt')
+const invoiceDownload = () => artifactDownload('invoice')
 </script>
 
 <template>
   <section>
+    <PrototypeFileList :case-id="item.id" />
+    <section class="panel" aria-label="Subida real interna">
+      <h2>Aportar archivo local real</h2>
+      <Select v-model="fileKind" :options="documentKinds" aria-label="Tipo de archivo local" :disabled="readonly" />
+      <input ref="localInput" type="file" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx" aria-label="Archivo local de muestra" :disabled="readonly" @change="chooseLocalFile" />
+      <p v-if="localFile">{{ localFile.name }} · {{ localFile.size }} bytes · {{ localFile.type }}</p>
+      <label v-if="localFile && item.documents.some(doc => doc.kind === fileKind)"><Checkbox v-model="confirmedReplacement" binary />Confirmo nueva versión; conserva anteriores y exige revisión</label>
+      <Button label="Confirmar subida real" :disabled="readonly || !localFile" :loading="pending" @click="confirmUpload" />
+      <p>Bytes privados locales y SQL reales. Límite 10.000.000 bytes; sin antivirus ni validación legal. Solo muestras autorizadas.</p>
+    </section>
+    <Message v-if="rowsStale" severity="warn" role="alert">Edición obsoleta conservada. Revisa filas frente al estado confirmado.<Button label="Confirmar edición revisada" :disabled="pending" @click="rebaseRows" /></Message>
     <NuxtLink to="/expedientes" class="back-link"><i class="pi pi-arrow-left" />Todos los expedientes</NuxtLink>
     <div class="page-heading detail-heading"><div class="client-title"><span class="avatar large" :class="item.campaign === '720' ? 'lavender' : 'mint'">{{ initials(item.name) }}</span><div><p class="eyebrow">{{ item.id }} · EJERCICIO 2025</p><h1>{{ item.name }}</h1><p>{{ item.email }} · {{ item.segment }}</p></div></div><div class="heading-actions"><Tag :value="stage(item)" :severity="statusSeverity(item.tax.state)" /><NuxtLink :to="`/portal/${item.id}?token=demo-${item.id}`" class="primary-link"><i class="pi pi-external-link" />Previsualizar portal</NuxtLink></div></div>
     <div v-if="feedback" role="status" aria-live="polite" class="feedback"><Message :severity="feedback.ok ? 'success' : 'error'">{{ feedback.message }}</Message></div>
@@ -110,7 +160,7 @@ function invoiceDownload() { downloadDemo(`Factura-${item.value.id}-DEMO.txt`, `
     <Dialog :visible="modal !== null" modal :header="title" :style="{ width: '520px', maxWidth: '95vw' }" @update:visible="value => { if (!value) modal = null }">
       <Message v-if="modal === 'nav-info'" severity="info">Los campos y formato de exportación NAV están pendientes de definición. No hay fichero importable ni conexión real. Referencia manual solo de demostración.</Message>
       <template v-else><p class="dialog-intro">{{ modal === 'prior' ? 'Confirma qué antecedentes previos has revisado. No se crean PH ni altas nuevas; confirmación humana explícita, no aprobación automática.' : 'Acción exclusivamente local y ficticia. Cancelar no modifica expediente.' }}</p><label v-if="needsNote" for="action-note" class="field">Motivo / observaciones<Textarea id="action-note" v-model="note" rows="3" /></label><label v-if="modal === 'ph-edit'" for="action-fee" class="field">Honorarios ilustrativos (EUR)<InputNumber v-model="fee" input-id="action-fee" :min="1" mode="currency" currency="EUR" locale="es-ES" /></label><label v-if="needsReference" for="action-reference" class="field">{{ modal === 'invoice' ? 'Número de factura ficticia' : modal === 'present' ? 'Referencia / muestra de justificante ficticio' : 'Referencia ficticia' }}<InputText id="action-reference" v-model="reference" /></label><label v-if="needsDate" for="action-date" class="field">Fecha (reloj demo)<InputText id="action-date" v-model="actionDate" type="date" :max="today" /></label><label v-if="modal === 'call'" for="call-outcome" class="field">Resultado<Select v-model="callOutcome" input-id="call-outcome" :options="['Sigue interesado', 'Sin contacto', 'No interesado']" /></label><label v-if="modal === 'assign'" for="owner-select" class="field">Responsable<Select v-model="owner" input-id="owner-select" :options="['Lucía Torres', 'Carlos Vidal', 'Marta Soler']" /></label><Message v-if="feedback && !feedback.ok" severity="error" role="alert">{{ feedback.message }}</Message></template>
-      <template #footer><Button :label="modal === 'nav-info' ? 'Cerrar' : 'Cancelar'" severity="secondary" @click="modal = null" /><Button v-if="modal !== 'nav-info'" label="Confirmar simulación" @click="submit" /></template>
+      <template #footer><Button :label="modal === 'nav-info' ? 'Cerrar' : 'Cancelar'" severity="secondary" :disabled="pending" @click="modal = null" /><Button v-if="modal !== 'nav-info'" label="Confirmar simulación" :disabled="pending || !synchronized" @click="submit" /></template>
     </Dialog>
   </section>
 </template>

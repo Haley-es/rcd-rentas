@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { roles } from '../types/domain'
 import { dateLabel } from '../utils/format'
-const { role, today, advanceDays, reset } = useMockApp()
+const { role, today, advanceDays, reset, setRole, pending: mutationPending, synchronized, error: stateError, refresh } = useMockApp()
+const dateText = computed(() => today.value ? dateLabel(today.value) : 'Sin sincronizar')
+const { session, logout, pending, error } = usePrototypeAuth()
+const username = computed(() => session.value.authenticated ? session.value.user.username : '')
 const route = useRoute()
 const mobileMenu = ref(false)
 const resetDialog = ref(false)
+const resetFeedback = ref('')
 const links = [
   { to: '/', icon: 'pi pi-th-large', text: 'Vista general' },
   { to: '/expedientes', icon: 'pi pi-folder', text: 'Expedientes' },
@@ -12,18 +16,24 @@ const links = [
   { to: '/tareas', icon: 'pi pi-check-square', text: 'Tareas y seguimiento' },
 ]
 const portal = computed(() => route.path.startsWith('/portal/'))
-watch(role, (value) => {
-  if (value === 'Cliente' && !portal.value) {
+async function changeRole(value: import('../types/domain').Role) {
+  const result = await setRole(value)
+  if (result.ok && value === 'Cliente' && !portal.value) {
     const id = 'DEMO-R08'
     navigateTo(`/portal/${id}?token=demo-${id}`)
   }
-})
+}
+async function confirmReset() { const result = await reset(); resetFeedback.value = result.message; if (result.ok) resetDialog.value = false }
 </script>
 
 <template>
   <div v-if="portal" class="portal-layout">
-    <div class="demo-ribbon">DEMO INTERACTIVA · Datos ficticios · Sin envíos, firma ni presentación real</div>
-    <main><slot /></main>
+    <div class="demo-ribbon">DEMO INTERACTIVA · No producción · Datos ficticios · MFA simulado</div>
+    <div class="prototype-access"><span>Usuario demo: {{ username }} · Identidad no verificada</span><Button label="Cerrar sesión" severity="secondary" :disabled="pending" @click="logout" /></div>
+    <Message v-if="error && !stateError" severity="error" role="alert">{{ error }}</Message>
+    <Message v-if="stateError" severity="error" role="alert">{{ stateError }}</Message>
+    <Button v-if="stateError" label="Reintentar sincronización" :disabled="mutationPending" @click="refresh()" />
+    <main><fieldset class="prototype-actions" :disabled="mutationPending || !synchronized"><slot /></fieldset></main>
   </div>
   <div v-else class="app-layout">
     <a href="#main" class="skip-link">Saltar al contenido</a>
@@ -43,18 +53,32 @@ watch(role, (value) => {
       <header class="topbar">
         <Button class="menu-button" icon="pi pi-bars" text aria-label="Abrir navegación" @click="mobileMenu = !mobileMenu" />
         <div class="breadcrumb"><span>Campañas fiscales</span><i class="pi pi-angle-right" aria-hidden="true" /><strong>Ejercicio 2025</strong></div>
-        <div class="topbar-right"><span class="demo-pill"><span />Entorno de demostración</span><span class="topbar-avatar">LT</span></div>
+        <div class="topbar-right"><span class="demo-pill"><span />No producción · MFA simulado</span><span class="prototype-username">Usuario demo: {{ username }}</span><Button label="Cerrar sesión" severity="secondary" :disabled="pending" @click="logout" /></div>
       </header>
       <div class="simulation-bar">
-        <span><i class="pi pi-flask" aria-hidden="true" />Sin BD ni integraciones. Cambios en memoria; recargar reinicia la demo.</span>
-        <div class="simulation-controls"><label for="demo-role">Simular rol</label><Select v-model="role" input-id="demo-role" aria-label="Simular rol" :options="roles" size="small" /><span class="sim-date">{{ dateLabel(today) }}</span><Button label="+1 día" severity="secondary" size="small" text @click="advanceDays(1)" /><Button icon="pi pi-refresh" severity="secondary" size="small" text aria-label="Reiniciar demo" @click="resetDialog = true" /></div>
+        <span><i class="pi pi-flask" aria-hidden="true" />SQL Server y archivos privados locales reales · Identidad/MFA ficticios · NAV/Criteria/correo/firma/extractor simulados.</span>
+        <div class="simulation-controls"><label for="demo-role">Simular rol</label><Select :model-value="role" input-id="demo-role" aria-label="Simular rol" :options="roles" size="small" :disabled="mutationPending || !synchronized" @update:model-value="changeRole" /><span class="sim-date">{{ dateText }}</span><Button label="+1 día" severity="secondary" size="small" text :disabled="mutationPending || !synchronized" @click="advanceDays(1)" /><Button icon="pi pi-refresh" severity="secondary" size="small" text aria-label="Reiniciar demo" :disabled="mutationPending || !synchronized" @click="resetDialog = true" /></div>
       </div>
-      <main id="main" class="page-content"><slot /></main>
+      <Message v-if="error && !stateError" severity="error" role="alert">{{ error }}</Message>
+      <Message v-if="stateError" severity="error" role="alert">{{ stateError }}</Message>
+      <Message v-if="resetFeedback" severity="warn" role="status">{{ resetFeedback }}</Message>
+      <Button v-if="stateError" label="Reintentar sincronización" :disabled="mutationPending" @click="refresh()" />
+      <main id="main" class="page-content"><fieldset class="prototype-actions" :disabled="mutationPending || !synchronized"><slot /></fieldset></main>
       <footer class="app-footer"><span>RCD · Campañas fiscales</span><span>Prototipo · Ejercicio y plazos ilustrativos, no asesoramiento fiscal</span></footer>
     </div>
     <Dialog v-model:visible="resetDialog" modal header="Reiniciar demostración" :style="{ width: '420px' }">
-      <p>Se perderán los cambios de esta sesión y se restaurarán los 18 escenarios ficticios.</p>
-      <template #footer><Button label="Cancelar" severity="secondary" @click="resetDialog = false" /><Button label="Reiniciar demo" @click="reset(); resetDialog = false" /></template>
+      <p>Se perderán todos los cambios persistentes y archivos locales compartidos, incluidos los de otros usuarios, y se restaurarán los 18 escenarios ficticios y ajustes iniciales. La sesión de acceso se conserva. Cancelar no elimina nada.</p>
+      <template #footer><Button label="Cancelar" severity="secondary" :disabled="mutationPending" @click="resetDialog = false" /><Button label="Reiniciar demo" :disabled="mutationPending || !synchronized" @click="confirmReset" /></template>
     </Dialog>
   </div>
 </template>
+
+<style scoped>
+.prototype-actions { border: 0; margin: 0; padding: 0; min-width: 0; }
+.prototype-access { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 12px 20px; background: #fff; }
+.prototype-access span, .prototype-username { overflow-wrap: anywhere; min-width: 0; font-size: 11px; }
+@media (max-width: 600px) {
+  .topbar-right { flex-wrap: wrap; justify-content: flex-end; gap: 6px; min-width: 0; }
+  .prototype-username { max-width: 140px; }
+}
+</style>

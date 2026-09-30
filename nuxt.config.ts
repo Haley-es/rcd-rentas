@@ -10,6 +10,23 @@ const RcdTheme = definePreset(Aura, {
 export default defineNuxtConfig({
   compatibilityDate: '2026-09-01',
   devtools: { enabled: false },
+  hooks: {
+    'vite:extendConfig'(config, { isServer }) {
+      if (!isServer) return
+      const shared = decodeURIComponent(new URL('./shared/', import.meta.url).pathname).replace(/^\/([A-Za-z]:)/, '$1')
+      // Bundle local shared utilities: Rolldown 8 rewrites their absolute externals incorrectly on Windows.
+      for (const build of [config.build, config.environments?.ssr?.build]) {
+        const options = build?.rolldownOptions
+        if (options && Array.isArray(options.external)) {
+          options.external = options.external.filter(entry =>
+            entry !== '#shared' && !(entry instanceof RegExp && entry.test(shared)))
+        }
+      }
+    },
+  },
+  runtimeConfig: {
+    prototypeAuth: { e2e: false, challengeTtlMs: 300_000, sessionTtlMs: 28_800_000 },
+  },
   modules: ['@primevue/nuxt-module'],
   css: ['primeicons/primeicons.css', '~/assets/css/main.css'],
   primevue: {

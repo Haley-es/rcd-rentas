@@ -10,11 +10,19 @@
     "postinstall": "nuxt prepare",
     "typecheck": "nuxt typecheck",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:e2e:deploy": "node scripts/prototype-e2e.mjs",
+    "files:reconcile": "node scripts/prototype-files-reconcile.mjs",
+    "test:e2e:persistence": "playwright test --config playwright.prototype.config.ts"
   },
   "dependencies": {
     "@primeuix/themes": "2.0.3",
     "@primevue/nuxt-module": "4.5.5",
+    "@prisma/client": "6.19.3",
+    "h3": "1.15.11",
     "nuxt": "4.5.2",
     "primeicons": "^7.0.0",
     "primevue": "4.5.5",
@@ -23,6 +31,8 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
+    "@types/node": "^24.19.0",
+    "prisma": "6.19.3",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18",
     "vue-tsc": "^3.2.6"

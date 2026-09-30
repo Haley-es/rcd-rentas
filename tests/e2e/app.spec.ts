@@ -1,4 +1,12 @@
 import { test, expect, type Page } from '@playwright/test'
+import { prototypeLogin } from './helpers/prototype-auth'
+import { loginPrototypeAPI, resetPrototypeDemo } from './helpers/prototype-state'
+
+test.beforeEach(async ({ page, request }) => {
+  await loginPrototypeAPI(request, 'http://127.0.0.1:3011')
+  await resetPrototypeDemo(request, 'http://127.0.0.1:3011')
+  await prototypeLogin(page)
+})
 
 async function open(page: Page, url: string) {
   await page.goto(url)
@@ -156,7 +164,7 @@ test('responsive móvil sin desbordamiento global ni errores JS', async ({ page 
 
 test('P05 sustituir archivo, entregar tanda y validar manualmente', async ({ page }) => {
   await open(page, '/portal/DEMO-R07?token=demo-DEMO-R07')
-  await page.getByRole('button', { name: 'Revisar metadatos' }).click()
+  await page.getByRole('button', { name: 'Revisar archivo real' }).click()
   await expect(page.getByRole('alert').filter({ hasText: /tipo/i }).first()).toBeVisible()
   await page.getByRole('combobox').first().click()
   await page.getByRole('option', { name: 'Datos fiscales', exact: true }).click()
@@ -199,9 +207,9 @@ test('P06 cliente confirma presentación sin certificado RCD ni envío de justif
 test('seguimientos se evalúan una vez y cliente simulado no navega gestión interna', async ({ page }) => {
   await open(page, '/tareas')
   await page.getByRole('button', { name: 'Evaluar seguimientos' }).click()
-  await expect(page.locator('.feedback')).toContainText('eventos simulados registrados')
+  await expect(page.locator('.feedback')).toContainText('eventos confirmados')
   await page.getByRole('button', { name: 'Evaluar seguimientos' }).click()
-  await expect(page.locator('.feedback')).toContainText('Ningún seguimiento nuevo vencido')
+  await expect(page.locator('.feedback')).toContainText('0 eventos confirmados')
   await role(page, 'Cliente')
   await expect(page).toHaveURL(/\/portal\/DEMO-R08/)
   await expect(page.getByRole('navigation', { name: 'Navegación principal' })).toHaveCount(0)

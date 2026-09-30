@@ -5,22 +5,46 @@ import { dirname, join, resolve } from 'node:path'
 const directory = resolve('docs', 'prds')
 const done = join(directory, 'done')
 const files = readdirSync(done).filter(name => name.endsWith('.md'))
+const todo = join(directory, 'todo')
+const pending = readdirSync(todo).filter(name => name.endsWith('.md'))
+const historical = files.filter(name => /^0[1-7]-/.test(name))
 
 describe('Documentación y entrega de PRDs', () => {
-  it('siete PRDs implementados en done y ninguno pendiente en todo', () => {
-    expect(files).toHaveLength(7)
-    expect(readdirSync(join(directory, 'todo')).filter(name => name.endsWith('.md'))).toEqual([])
-    const criteria = new Set(files.flatMap(name => readFileSync(join(done, name), 'utf8').match(/P\d{2}-CA\d{2}/g) ?? []))
+  it('conserva siete PRDs históricos y sus 73 criterios sin pendientes históricos', () => {
+    expect(historical).toHaveLength(7)
+    for (const id of ['01', '02', '03', '04', '05', '06', '07']) {
+      expect(historical.filter(name => name.startsWith(`${id}-`))).toHaveLength(1)
+    }
+    expect(pending.filter(name => /^0[1-7]-/.test(name))).toEqual([])
+    const criteria = new Set(historical.flatMap(name => readFileSync(join(done, name), 'utf8').match(/P\d{2}-CA\d{2}/g) ?? []))
     expect(criteria.size).toBe(73)
-    for (const name of files) {
+    for (const name of historical) {
       const content = readFileSync(join(done, name), 'utf8')
       expect(content).toContain('**Estado:** implementado y validado como mockup.')
       expect(content).not.toContain('**Estado:** pendiente de implementación.')
     }
   })
 
+  it('inventaría 08–10 exactamente una vez y no anuncia pendientes como terminados', () => {
+    for (const id of ['08', '09', '10']) {
+      const completed = files.filter(name => name.startsWith(`${id}-`))
+      const waiting = pending.filter(name => name.startsWith(`${id}-`))
+      expect([...completed, ...waiting]).toHaveLength(1)
+      for (const name of waiting) {
+        expect(readFileSync(join(todo, name), 'utf8')).toContain('**Estado:** pendiente de implementación.')
+      }
+      for (const name of completed) {
+        const text = readFileSync(join(done, name), 'utf8')
+        expect(text).toContain('**Estado:** implementado y validado como prototipo local.')
+        expect(text).not.toContain('**Estado:** pendiente de implementación.')
+        expect(text).toContain('## Evidencia de implementación')
+      }
+    }
+    expect(files.length + pending.length).toBe(10)
+  })
+
   it('enlaces locales de PRDs y guía siguen válidos tras moverlos', () => {
-    const documents = [resolve('README.md'), join(directory, 'README.md'), ...files.map(name => join(done, name))]
+    const documents = [resolve('README.md'), join(directory, 'README.md'), ...files.map(name => join(done, name)), ...pending.map(name => join(todo, name))]
     const missing: string[] = []
     for (const file of documents) {
       const text = readFileSync(file, 'utf8')

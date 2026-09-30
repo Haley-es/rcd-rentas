@@ -9,15 +9,20 @@ import ProgressBar from 'primevue/progressbar'
 import Select from 'primevue/select'
 import Tag from 'primevue/tag'
 import Textarea from 'primevue/textarea'
-import type { CaseFile, DocumentItem, WorkflowAction } from '../types/domain'
+import type { CaseFile, DocumentItem, WorkflowAction, ActionResult } from '../types/domain'
+import type { PrototypePortalCase, PrototypePortalCapabilities } from '../../shared/types/prototype'
 import { dateLabel, initials, money, statusSeverity } from '../utils/format'
 
-const props = defineProps<{ expediente: CaseFile }>()
-const emit = defineEmits<{ action: [action: WorkflowAction] }>()
+const props = defineProps<{
+  expediente: PrototypePortalCase
+  capabilities: PrototypePortalCapabilities
+  perform: (action: WorkflowAction) => Promise<ActionResult>
+  upload: (file: File, kind: string) => Promise<ActionResult>
+  pending: boolean
+}>()
 
 type Intent = 'respond' | 'decline' | 'ph-sign' | 'ph-reject' | 'withdraw'
   | 'add-document' | 'deliver-documents' | 'tax-accept' | 'tax-change' | 'present'
-type FileMetadata = { name: string; size: number; mime: string }
 type Requirement = { kind: string; required: boolean; hint: string }
 type FormErrors = { consent?: string; identityNumber?: string; expiry?: string; identity?: string; contact?: string }
 
@@ -43,7 +48,8 @@ const expiry = ref('')
 const referenceDate = ref(props.expediente.contactedAt)
 const formErrors = ref<FormErrors>({})
 const selectedKind = ref<string | null>(null)
-const selectedFile = ref<FileMetadata | null>(null)
+const selectedFile = ref<File | null>(null)
+const { files, downloadFile } = useMockApp()
 const fileInput = ref<HTMLInputElement | null>(null)
 const uploadError = ref('')
 const localMessage = ref('')
@@ -71,32 +77,22 @@ const signedCurrent = computed(() => caseFile.value.ph.state === 'Firmada'
 const needsEarlyIdentity = computed(() => caseFile.value.campaign === '720' && !prior720.value
   && (capturePending.value || !caseFile.value.identity.dni && !signedCurrent.value)
   && !readOnly.value && !presented.value)
-const canUpload = computed(() => !readOnly.value && (caseFile.value.portalSent || needsEarlyIdentity.value))
-const canSign = computed(() => !readOnly.value && !prior720.value && caseFile.value.opened
-  && caseFile.value.ph.state === 'Enviada'
-  && caseFile.value.ph.approvedVersion === caseFile.value.ph.version
-  && Boolean(caseFile.value.ph.sentAt))
-const canWithdraw = computed(() => !readOnly.value && caseFile.value.opened && !presented.value)
-const phVisible = computed(() => !prior720.value && caseFile.value.opened
-  && ['Enviada', 'Firmada', 'Rechazada'].includes(caseFile.value.ph.state))
-const draftVisible = computed(() => caseFile.value.campaign === 'Renta' && caseFile.value.tax.version > 0
-  && ['En revisión cliente', 'Cambios solicitados', 'Aceptado', 'Presentado', 'Cerrado'].includes(caseFile.value.tax.state))
-const canRespondToDraft = computed(() => !readOnly.value && caseFile.value.campaign === 'Renta'
-  && caseFile.value.tax.state === 'En revisión cliente' && caseFile.value.tax.version > 0)
+const canUpload = computed(() => props.capabilities.canUpload)
+const canSign = computed(() => props.capabilities.canSign)
+const canWithdraw = computed(() => props.capabilities.canWithdraw)
+const phVisible = computed(() => props.capabilities.phVisible)
+const draftVisible = computed(() => props.capabilities.draftVisible)
+const canRespondToDraft = computed(() => props.capabilities.canRespondToDraft)
 const agreedCurrent = computed(() => caseFile.value.tax.acceptedVersion === caseFile.value.tax.version
   && caseFile.value.tax.version > 0)
-const canPresent = computed(() => !readOnly.value && caseFile.value.campaign === 'Renta'
-  && caseFile.value.presenter === 'Cliente' && caseFile.value.tax.state === 'Aceptado'
-  && agreedCurrent.value && signedCurrent.value && caseFile.value.docsComplete
-  && caseFile.value.identity.dni && caseFile.value.pbc === 'Apto' && Boolean(caseFile.value.nav))
-const canDeliver = computed(() => !readOnly.value && caseFile.value.portalSent
-  && caseFile.value.documents.length > 0 && !caseFile.value.delivered)
+const canPresent = computed(() => props.capabilities.canPresent)
+const canDeliver = computed(() => props.capabilities.canDeliver)
 const illustrativeFee = computed(() => rentaType.value === 'Individual' ? 150 : 250)
 const editableNote = computed(() => ['ph-reject', 'withdraw', 'tax-change'].includes(intent.value ?? ''))
 const versionContext = computed(() => JSON.stringify([
   caseFile.value.id, caseFile.value.contact, caseFile.value.opened,
   caseFile.value.ph, caseFile.value.tax, caseFile.value.presenter,
-  caseFile.value.identity, caseFile.value.pbc, caseFile.value.nav,
+  caseFile.value.identity, props.capabilities,
   caseFile.value.portalSent, caseFile.value.delivered, caseFile.value.docsComplete,
   caseFile.value.documents,
 ]))
@@ -177,9 +173,8 @@ const nextStep = computed(() => {
   if (presented.value) return 'Consulta el justificante y la factura cuando estén disponibles'
   return 'El equipo prepara el siguiente paso'
 })
-const receiptAvailable = computed(() => presented.value && Boolean(caseFile.value.tax.receipt)
-  && (caseFile.value.campaign === 'Renta' && caseFile.value.presenter === 'Cliente' || caseFile.value.tax.receiptSent))
-const invoiceAvailable = computed(() => Boolean(caseFile.value.invoice.number) && caseFile.value.invoice.sent)
+const receiptAvailable = computed(() => props.capabilities.receiptAvailable)
+const invoiceAvailable = computed(() => props.capabilities.invoiceAvailable)
 const dialogTitle = computed(() => {
   const titles: Record<Intent, string> = {
     respond: 'Confirmar respuesta de demostración',
@@ -187,7 +182,7 @@ const dialogTitle = computed(() => {
     'ph-sign': `Simular firma de la PH · v${caseFile.value.ph.version}`,
     'ph-reject': 'Solicitar renegociación de honorarios',
     withdraw: 'Confirmar retirada definitiva del servicio',
-    'add-document': currentDocument(selectedKind.value ?? '') ? 'Añadir una versión de demostración' : 'Añadir metadatos de una muestra',
+    'add-document': currentDocument(selectedKind.value ?? '') ? 'Añadir una versión de demostración' : 'Añadir archivo local real',
     'deliver-documents': 'Entregar documentación para revisión',
     'tax-accept': `Aceptar borrador ficticio · v${caseFile.value.tax.version}`,
     'tax-change': 'Solicitar revisión del borrador',
@@ -202,7 +197,7 @@ const dialogDescription = computed(() => {
     'ph-sign': 'Solo cambia el estado de la versión enviada. No es una firma electrónica ni un contrato válido.',
     'ph-reject': 'El equipo podrá revisar la propuesta, aprobar otra versión y reenviarla. El expediente sigue abierto.',
     withdraw: 'Esta retirada es definitiva dentro del mockup: detiene el seguimiento del servicio. No equivale a pedir cambios de honorarios.',
-    'add-document': 'Solo se añaden nombre, tipo documental y tamaño. No se leen, guardan ni transmiten bytes. Una nueva versión conserva el historial y requiere otra revisión.',
+    'add-document': 'Se transmiten y guardan bytes reales en disco privado local y metadatos en SQL. Usa solo muestras autorizadas. Una nueva versión conserva historial y exige revisión; no equivale a entrega.',
     'deliver-documents': 'Se registrará una entrega explícita para el responsable. Una entrega parcial es posible; no significa documentación completa ni validada.',
     'tax-accept': 'El acuerdo se vincula únicamente a esta versión. No presenta ninguna declaración ni acepta versiones futuras.',
     'tax-change': 'Tu comentario vuelve al profesional para una nueva versión. No se presenta ninguna declaración.',
@@ -274,7 +269,7 @@ function chooseFile(event: Event) {
   const input = event.target
   if (!(input instanceof HTMLInputElement)) return
   const file = input.files?.[0]
-  selectedFile.value = file ? { name: file.name, size: file.size, mime: file.type } : null
+  selectedFile.value = file ?? null
   input.value = ''
   uploadError.value = ''
   if (selectedFile.value) validateUpload()
@@ -286,7 +281,7 @@ function validateUpload() {
   if (!canUpload.value) error = 'La aportación documental no está habilitada en este estado.'
   else if (!selectedKind.value || !uploadKinds.value.includes(selectedKind.value)) error = 'Selecciona un tipo documental.'
   else if (!file) error = 'Selecciona un archivo de demostración.'
-  else if (!allowedMimeTypes.includes(file.mime)) error = 'MIME no admitido. Usa una muestra PDF, JPEG, PNG, DOC, DOCX, XLS o XLSX con su tipo MIME correspondiente.'
+  else if (!allowedMimeTypes.includes(file.type)) error = 'MIME no admitido. Usa una muestra PDF, JPEG, PNG, DOC, DOCX, XLS o XLSX con su tipo MIME correspondiente.'
   else if (!allowedExtensions.some(extension => file.name.toLowerCase().endsWith(extension))) error = 'Extensión no admitida. Usa .pdf, .jpg, .jpeg, .png, .doc, .docx, .xls o .xlsx.'
   else if (file.size === 0) error = 'El archivo está vacío. Selecciona una muestra no vacía.'
   else if (file.size > maxSize) error = 'La muestra supera 10 MB (10.000.000 bytes). No se ha añadido.'
@@ -337,7 +332,8 @@ async function openConfirmation(value: Intent) {
   dialogVisible.value = true
 }
 
-function confirmAction() {
+async function confirmAction() {
+  if (props.pending) return
   const value = intent.value
   if (!value) return
   if (actionContext.value !== versionContext.value || !intentAllowed(value)) {
@@ -389,13 +385,15 @@ function confirmAction() {
       action = { type: 'present', receipt: receiptReference.value.trim(), date: presentationDate.value }
       break
   }
+  const result = value === 'add-document' && selectedFile.value && selectedKind.value ?
+    await props.upload(selectedFile.value, selectedKind.value) : await props.perform(action)
+  if (!result.ok) { dialogError.value = result.message; return }
   dialogVisible.value = false
-  localMessage.value = 'Acción de simulación remitida al escenario. Su resultado y estado los confirma el panel principal.'
+  localMessage.value = result.message
   if (value === 'add-document') selectedFile.value = null
-  emit('action', action)
 }
 
-function downloadSample(kind: 'ph' | 'draft' | 'receipt' | 'invoice' | 'document', document?: DocumentItem) {
+async function downloadSample(kind: 'ph' | 'draft' | 'receipt' | 'invoice' | 'document', document?: DocumentItem) {
   downloadError.value = ''
   const available = kind === 'ph' ? phVisible.value
     : kind === 'draft' ? draftVisible.value
@@ -406,54 +404,18 @@ function downloadSample(kind: 'ph' | 'draft' | 'receipt' | 'invoice' | 'document
     downloadError.value = 'La muestra no está disponible en el estado actual.'
     return
   }
-  let objectUrl: string | null = null
-  let anchor: HTMLAnchorElement | null = null
-  try {
-    let details = ''
-    let filename = kind === 'document' ? `documento-v${document?.version}` : kind
-    switch (kind) {
-      case 'ph':
-        filename = `honorarios-v${caseFile.value.ph.version}`
-        details = `PH v${caseFile.value.ph.version}\nEstado: ${caseFile.value.ph.state}\nHonorarios ilustrativos: ${money(caseFile.value.fee)}\nAprobación registrada: ${caseFile.value.ph.approvedVersion === null ? 'No registrada' : `v${caseFile.value.ph.approvedVersion}`}\nFirma registrada: ${caseFile.value.ph.signedVersion === null ? 'No registrada' : `v${caseFile.value.ph.signedVersion}`}`
-        break
-      case 'draft':
-        filename = `borrador-v${caseFile.value.tax.version}`
-        details = `Borrador Renta v${caseFile.value.tax.version}\nEstado: ${caseFile.value.tax.state}\nPresentador: ${caseFile.value.presenter}\nResultado ilustrativo precargado: a devolver 125 EUR.\nSin cálculo tributario ni validez fiscal.\nVersión aceptada: ${caseFile.value.tax.acceptedVersion === null ? 'Ninguna' : `v${caseFile.value.tax.acceptedVersion}`}`
-        break
-      case 'receipt':
-        filename = 'justificante-ficticio'
-        details = `Referencia registrada: ${caseFile.value.tax.receipt}\nFecha registrada: ${formatDate(caseFile.value.tax.presentationDate ?? null)}\nMuestra generada; no reproduce ningún justificante aportado ni acredita presentación ante Hacienda.`
-        break
-      case 'invoice':
-        filename = 'factura-ficticia'
-        details = `Factura/minuta ficticia: ${caseFile.value.invoice.number}\nImporte ilustrativo: ${money(caseFile.value.invoice.amount)}\nEnvío simulado registrado. No acredita emisión contable, impuestos, cobro ni pago.`
-        break
-      case 'document':
-        if (!document) return
-        details = `Tipo: ${document.kind}\nNombre de muestra: ${document.name}\nVersión: ${document.version}\nTamaño declarado: ${document.size} bytes\nEstado registrado: ${document.state}\nSolo metadatos. El contenido original no se ha leído ni conservado.`
-        break
-    }
-    const text = `SIMULACIÓN — MUESTRA FICTICIA SIN VALIDEZ LEGAL, FISCAL NI COMERCIAL\n\nExpediente: ${caseFile.value.id}\nCampaña: ${caseFile.value.campaign}\n\n${details}\n\nTXT generado localmente. No es un PDF ni un documento oficial. Sin envío a servicios externos.\n`
-    objectUrl = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }))
-    anchor = window.document.createElement('a')
-    anchor.href = objectUrl
-    anchor.download = `${caseFile.value.id}-${filename}-simulacion.txt`
-    window.document.body.appendChild(anchor)
-    anchor.click()
-  } catch (error) {
-    downloadError.value = `No se ha podido generar la muestra TXT: ${error instanceof Error ? error.message : String(error)}`
-  } finally {
-    anchor?.remove()
-    if (objectUrl) {
-      const url = objectUrl
-      window.setTimeout(() => URL.revokeObjectURL(url), 1000)
-    }
-  }
+  const category = kind === 'draft' ? 'tax-draft' : kind
+  const file = files.value.findLast(file => file.caseId === caseFile.value.id && file.category === category &&
+    (kind !== 'document' || file.documentId === document?.id))
+  if (!file?.fileId) { downloadError.value = 'Original no disponible: muestra precargada, solo metadatos, o histórico sin archivo disponible. Prepara explícitamente las muestras TXT/CSV actuales.'; return }
+  const result = await downloadFile(file)
+  if (!result.ok) downloadError.value = result.message
 }
 </script>
 
 <template>
   <main class="client-portal" :aria-labelledby="fieldId('title')">
+    <PrototypeFileList :case-id="expediente.id" />
     <div class="simulation-banner">
       <i class="pi pi-desktop" aria-hidden="true" />
       <span><strong>Portal de demostración.</strong> Datos ficticios, sin envíos ni servicios reales. Toda acción requiere confirmar la simulación.</span>
@@ -587,7 +549,7 @@ function downloadSample(kind: 'ph' | 'draft' | 'receipt' | 'invoice' | 'document
           </dl>
           <p v-if="expediente.ph.signedVersion !== null && !signedCurrent" class="notice">La firma registrada no valida automáticamente la versión actual.</p>
           <p v-if="expediente.campaign === 'Renta' && expediente.presenter === 'RCD'" class="muted small">La autorización de uso del certificado es independiente de esta PH. Una cláusula o una firma de demostración no la hace disponible.</p>
-          <Message v-if="expediente.ph.state === 'Rechazada'" severity="warn" :closable="false">Renegociación pendiente. {{ expediente.ph.note || 'El equipo debe revisar, validar y reenviar una propuesta.' }} El expediente no se archiva por pedir cambios.</Message>
+          <Message v-if="expediente.ph.state === 'Rechazada'" severity="warn" :closable="false">Renegociación pendiente. El equipo debe revisar, validar y reenviar una propuesta. El expediente no se archiva por pedir cambios.</Message>
           <Message v-if="expediente.ph.state === 'Enviada' && !canSign && !readOnly" severity="warn" :closable="false">Firma bloqueada: falta aprobación de la versión actual o registro de su envío.</Message>
           <div class="actions">
             <Button label="Descargar muestra TXT" icon="pi pi-download" severity="secondary" outlined @click="downloadSample('ph')" />
@@ -605,7 +567,7 @@ function downloadSample(kind: 'ph' | 'draft' | 'receipt' | 'invoice' | 'document
         <div class="section-heading"><div><p class="eyebrow">A tu ritmo</p><h2 :id="fieldId('guide')">Qué ocurre ahora</h2></div><i class="pi pi-compass card-heading-icon" aria-hidden="true" /></div>
         <p class="guide-next">{{ nextStep }}</p>
         <ul class="guide-list">
-          <li><i class="pi pi-upload" aria-hidden="true" /><div><strong>Aporta muestras</strong><span>Solo guardamos metadatos, nunca contenido de archivos.</span></div></li>
+          <li><i class="pi pi-upload" aria-hidden="true" /><div><strong>Aporta muestras</strong><span>Guardamos bytes reales en disco privado local y versiones en SQL.</span></div></li>
           <li><i class="pi pi-send" aria-hidden="true" /><div><strong>Entrega explícitamente</strong><span>Añadir archivos no los entrega al profesional.</span></div></li>
           <li><i class="pi pi-user" aria-hidden="true" /><div><strong>Revisión humana</strong><span>Tu profesional decide si falta información. Entregar no valida.</span></div></li>
         </ul>
@@ -656,14 +618,14 @@ function downloadSample(kind: 'ph' | 'draft' | 'receipt' | 'invoice' | 'document
             <div class="field">
               <label :for="fieldId('file')">Archivo ficticio <span>(obligatorio)</span></label>
               <input :id="fieldId('file')" ref="fileInput" class="native-file" type="file" :accept="fileAccept" :aria-invalid="Boolean(uploadError)" :aria-describedby="uploadError ? `${fieldId('file-help')} ${fieldId('upload-error')}` : fieldId('file-help')" @change="chooseFile" />
-              <small :id="fieldId('file-help')">Selector local: conserva solo nombre, tamaño y MIME para validar. No lee contenido. El MIME no es una inspección de seguridad.</small>
+              <small :id="fieldId('file-help')">Carga real privada: conserva selección hasta confirmar SQL y disco. Extensión/MIME no son antivirus ni validación legal.</small>
             </div>
-            <div v-if="selectedFile" class="file-summary"><i class="pi pi-file" aria-hidden="true" /><div><strong>{{ selectedFile.name }}</strong><span>{{ formatSize(selectedFile.size) }} · {{ selectedFile.mime || 'MIME no informado' }}</span></div></div>
+            <div v-if="selectedFile" class="file-summary"><i class="pi pi-file" aria-hidden="true" /><div><strong>{{ selectedFile.name }}</strong><span>{{ formatSize(selectedFile.size) }} · {{ selectedFile.type || 'MIME no informado' }}</span></div></div>
             <Message v-if="selectedKind && currentDocument(selectedKind)" severity="warn" :closable="false">
               Ya existe v{{ currentDocument(selectedKind)?.version }} de este tipo. Confirmar añade una nueva versión, incluso si repites el nombre; no borra las anteriores.
             </Message>
             <p v-if="uploadError" :id="fieldId('upload-error')" class="field-error" role="alert">{{ uploadError }}</p>
-            <Button type="submit" :label="selectedKind && currentDocument(selectedKind) ? 'Revisar nueva versión' : 'Revisar metadatos'" icon="pi pi-plus" />
+            <Button type="submit" :label="selectedKind && currentDocument(selectedKind) ? 'Revisar nueva versión' : 'Revisar archivo real'" icon="pi pi-plus" :disabled="pending" :loading="pending" />
           </form>
         </div>
 
@@ -675,13 +637,13 @@ function downloadSample(kind: 'ph' | 'draft' | 'receipt' | 'invoice' | 'document
               <i class="pi pi-file document-file-icon" aria-hidden="true" />
               <div class="document-name"><h4>{{ group.kind }}</h4><p>{{ group.current.name }}</p><span class="muted small">Versión actual v{{ group.current.version }} · {{ formatSize(group.current.size) }}</span></div>
               <Tag :value="group.current.state" :severity="statusSeverity(group.current.state)" />
-              <Button label="Muestra TXT" icon="pi pi-download" severity="secondary" text :aria-label="`Descargar muestra TXT de ${group.kind}, versión ${group.current.version}`" @click="downloadSample('document', group.current)" />
+              <Button label="Original real" icon="pi pi-download" severity="secondary" text :disabled="!files.some(file => file.documentId === group.current.id && file.fileId)" :aria-label="`Descargar original de ${group.kind}, versión ${group.current.version}`" @click="downloadSample('document', group.current)" />
             </div>
             <p v-if="group.current.state === 'Sustituir'" class="document-note field-error">Sustitución solicitada: {{ group.current.note || 'Aporta una nueva versión de demostración.' }}</p>
             <p v-else-if="group.current.note" class="document-note muted">{{ group.current.note }}</p>
             <details v-if="group.versions.length > 1" class="version-history">
               <summary>Consultar {{ group.versions.length - 1 }} versión(es) sustituida(s)</summary>
-              <ul><li v-for="version in group.versions.slice(1)" :key="version.id"><div><strong>v{{ version.version }} · {{ version.name }}</strong><span>Sustituida · {{ formatSize(version.size) }} · revisión histórica: {{ version.state }}</span><span v-if="version.note">{{ version.note }}</span></div><Button label="TXT ficticio" severity="secondary" text :aria-label="`Descargar muestra histórica TXT de ${group.kind}, versión ${version.version}`" @click="downloadSample('document', version)" /></li></ul>
+              <ul><li v-for="version in group.versions.slice(1)" :key="version.id"><div><strong>v{{ version.version }} · {{ version.name }}</strong><span>Sustituida · {{ formatSize(version.size) }} · revisión histórica: {{ version.state }}</span><span v-if="version.note">{{ version.note }}</span></div><Button label="Original histórico" severity="secondary" text :disabled="!files.some(file => file.documentId === version.id && file.fileId)" :aria-label="`Descargar original histórico de ${group.kind}, versión ${version.version}`" @click="downloadSample('document', version)" /></li></ul>
             </details>
           </article>
         </div>
@@ -706,7 +668,7 @@ function downloadSample(kind: 'ph' | 'draft' | 'receipt' | 'invoice' | 'document
             <div><dt>Acuerdo registrado</dt><dd>{{ expediente.tax.acceptedVersion === null ? 'Ninguno' : `v${expediente.tax.acceptedVersion}` }}</dd></div>
           </dl>
           <Message v-if="expediente.tax.acceptedVersion !== null && !agreedCurrent" severity="warn" :closable="false">El acuerdo anterior no corresponde a la versión actual. Una nueva versión requiere nuevo acuerdo.</Message>
-          <Message v-if="expediente.tax.state === 'Cambios solicitados'" severity="warn" :closable="false">Revisión solicitada: {{ expediente.tax.note || 'El profesional prepara una nueva versión.' }}</Message>
+          <Message v-if="expediente.tax.state === 'Cambios solicitados'" severity="warn" :closable="false">Revisión solicitada: el profesional prepara una nueva versión.</Message>
           <div class="actions"><Button label="Descargar borrador TXT ficticio" icon="pi pi-download" severity="secondary" outlined @click="downloadSample('draft')" /><Button v-if="canRespondToDraft" label="Estoy de acuerdo · simulación" icon="pi pi-check" @click="openConfirmation('tax-accept')" /><Button v-if="canRespondToDraft" label="Solicitar revisión" severity="secondary" text @click="openConfirmation('tax-change')" /></div>
           <details v-if="expediente.tax.drafts?.length" class="version-history draft-history">
             <summary>Registros de versiones del borrador</summary>
@@ -748,7 +710,7 @@ function downloadSample(kind: 'ph' | 'draft' | 'receipt' | 'invoice' | 'document
       </section>
     </div>
 
-    <footer class="portal-footer"><span>RCD · Portal cliente de demostración</span><span>Sin BD, correo, almacenamiento documental ni integraciones. Solo estado recibido del escenario.</span></footer>
+    <footer class="portal-footer"><span>RCD · Portal cliente de demostración</span><span>SQL y bytes locales reales. Seed solo metadatos; TXT/CSV ficticios. Sin correo ni integraciones reales.</span></footer>
 
     <Dialog v-model:visible="dialogVisible" modal :header="dialogTitle" class="portal-dialog" :style="{ width: 'min(36rem, calc(100vw - 2rem))' }" :draggable="false" :dismissable-mask="false">
       <div class="confirmation-content">
@@ -777,7 +739,7 @@ function downloadSample(kind: 'ph' | 'draft' | 'receipt' | 'invoice' | 'document
         </div>
         <p v-if="dialogError" :id="fieldId('dialog-error')" class="field-error" role="alert">{{ dialogError }}</p>
       </div>
-      <template #footer><Button label="Cancelar" severity="secondary" outlined @click="dialogVisible = false" /><Button :label="intent === 'withdraw' ? 'Confirmar retirada simulada' : 'Confirmar simulación'" :severity="intent === 'withdraw' ? 'danger' : undefined" @click="confirmAction" /></template>
+      <template #footer><Button label="Cancelar" severity="secondary" outlined :disabled="pending" @click="dialogVisible = false" /><Button :label="intent === 'withdraw' ? 'Confirmar retirada simulada' : 'Confirmar simulación'" :severity="intent === 'withdraw' ? 'danger' : undefined" :disabled="pending" @click="confirmAction" /></template>
     </Dialog>
   </main>
 </template>
