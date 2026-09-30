@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RCD · Campañas de Renta y Modelo 720 · Propuesta</title>
+  <meta name="description" content="Propuesta de digitalización de las campañas de Renta y Modelo 720 para RCD, con demo del ciclo completo." />
+  <link rel="stylesheet" href="estilos.css" />
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+      <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></symbol>
+      <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+      <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18.5 14a6.5 6.5 0 0 1 3 6"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+      <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6Z"/><path d="m9 12 2 2 4-4"/></symbol>
+      <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M14 3v6h6"/><path d="M8 13h8M8 17h5"/></symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></symbol>
+      <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><path d="m6 6 2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+      <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4Z"/><path d="M10 21h4"/></symbol>
+      <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16Z"/><path d="m13.5 6.5 4 4"/></symbol>
+      <symbol id="i-euro" viewBox="0 0 24 24"><path d="M18 6.5A7 7 0 1 0 18 17.5"/><path d="M4 10h10M4 14h10"/></symbol>
+      <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M10 10h4v4h-4zM9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2 20h20Z"/><path d="M12 10v4M12 17.5v.5"/></symbol>
+      <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></symbol>
+      <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4Z"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5Z" fill="currentColor"/></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4.5" width="4" height="15" rx="1" fill="currentColor"/><rect x="14" y="4.5" width="4" height="15" rx="1" fill="currentColor"/></symbol>
+      <symbol id="i-restart" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v5h5"/></symbol>
+      <symbol id="i-prev" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
+      <symbol id="i-next" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+      <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+      <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+      <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></symbol>
+      <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5Z"/><path d="m3 13 9 5 9-5"/></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+      <symbol id="i-trend" viewBox="0 0 24 24"><path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
+    </defs>
+  </svg>
+
+  <canvas id="fondo" aria-hidden="true"></canvas>
+
+  <div id="viewport">
+    <div id="stage">
+      <header class="chrome">
+        <div class="brand">
+          <span class="brand-mark">r.</span>
+          <span class="brand-text"><strong>RCD</strong><small>Legal · Tax</small></span>
+          <span class="brand-sep"></span>
+          <span class="brand-title">Propuesta · Campañas de Renta y Modelo 720</span>
+        </div>
+        <nav class="chrome-nav" aria-label="Diapositivas"></nav>
+        <div class="chrome-tools">
+          <span class="slide-counter"><b id="slideNum">01</b> / <span id="slideTotal">08</span></span>
+          <button class="icon-btn" id="btnFullscreen" type="button" title="Pantalla completa (F)" aria-label="Pantalla completa"><svg><use href="#i-expand"/></svg></button>
+        </div>
+      </header>
+
+      <main id="slides">
+
+        <!-- 1 · Portada -->
+        <section class="slide slide-cover" data-title="Inicio" data-id="portada">
+          <div class="cover-copy">
+            <p class="eyebrow" data-a="up">Propuesta de digitalización · Ejercicio 2026</p>
+            <h1 class="display" data-a="words">Renta y Modelo 720, <em>del primer correo al cierre</em>, en una sola plataforma.</h1>
+            <p class="lead" data-a="up">Una experiencia guiada para vuestros clientes y un control total para el equipo: comunicación, propuesta de honorarios, validaciones, documentación, presentación y factura. Todo conectado y trazado.</p>
+            <div class="cover-actions" data-a="up">
+              <button class="btn btn-primary" type="button" data-goto="demo">Ver la demo del ciclo completo <svg><use href="#i-arrow"/></svg></button>
+              <button class="btn btn-ghost" type="button" data-next>Empezar la presentación</button>
+            </div>
+            <ul class="cover-facts" data-a="stagger">
+              <li><b data-count="2">0</b><span>campañas en un mismo sistema</span></li>
+              <li><b data-count="8">0</b><span>fases del expediente guiadas</span></li>
+              <li><b data-count="1">0</b><span>expediente único por cliente</span></li>
+            </ul>
+          </div>
+          <div class="cover-visual" aria-hidden="true">
+            <div class="orbit orbit-1"></div>
+            <div class="orbit orbit-2"><span class="orbit-dot"></span></div>
+            <div class="stack">
+              <figure class="shot shot-back"><img src="capturas/tareas.png" alt="" /></figure>
+              <figure class="shot shot-mid"><img src="capturas/portal-borrador.png" alt="" /></figure>
+              <figure class="shot shot-front"><img src="capturas/dashboard.png" alt="" /></figure>
+            </div>
+            <div class="float-chip chip-a"><svg><use href="#i-check-circle"/></svg><span><b>PH firmada</b><small>Hace 2 min · Portal cliente</small></span></div>
+            <div class="float-chip chip-b"><svg><use href="#i-bell"/></svg><span><b>Recordatorio automático</b><small>7 días sin respuesta</small></span></div>
+            <div class="float-chip chip-c"><svg><use href="#i-sparkles"/></svg><span><b>Extractor 720</b><small>3 bienes detectados</small></span></div>
+            <svg class="sparkle" viewBox="0 0 40 40"><path d="M20 2v36M2 20h36M7 7l26 26M33 7 7 33"/></svg>
+          </div>
+        </section>
+
+        <!-- 2 · Punto de partida -->
+        <section class="slide slide-problem" data-title="Punto de partida" data-id="reto">
+          <div class="col-left">
+            <p class="eyebrow" data-a="up">01 · El punto de partida</p>
+            <h2 class="title" data-a="words">Dos campañas críticas. <em>Más de 20 estados</em> gestionados a mano.</h2>
+            <p class="lead" data-a="up">Renta y 720 son procesos repetitivos y con un patrón claro, pero hoy dependen de correos, llamadas, hojas de cálculo y memoria del equipo.</p>
+            <div class="stat-grid" data-a="stagger">
+              <div class="stat"><b><span data-count="20">0</span>+</b><span>estados de cliente que se actualizan manualmente</span></div>
+              <div class="stat"><b data-count="8">0</b><span>perfiles implicados: socio, profesional, altas, PBC, IT…</span></div>
+              <div class="stat"><b data-count="3">0</b><span>seguimientos manuales por cliente que no responde</span></div>
+              <div class="stat"><b>0</b><span>visibilidad en tiempo real del estado de la campaña</span></div>
+            </div>
+          </div>
+          <div class="pain-grid" data-a="flip">
+            <article class="pain"><span class="pain-icon"><svg><use href="#i-clock"/></svg></span><h3>Operativos</h3><p>Sobrecarga del equipo y pasos repetitivos que dependen de personas concretas.</p></article>
+            <article class="pain"><span class="pain-icon"><svg><use href="#i-users"/></svg></span><h3>Relación con el cliente</h3><p>Cuesta saber quién ha respondido o firmado y la subida de documentos no es fluida.</p></article>
+            <article class="pain"><span class="pain-icon"><svg><use href="#i-trend"/></svg></span><h3>Negocio</h3><p>Riesgo de perder clientes por falta de seguimiento y poca capacidad para crecer.</p></article>
+            <article class="pain"><span class="pain-icon"><svg><use href="#i-db"/></svg></span><h3>Tecnológicos</h3><p>Sin una fuente única de verdad: herramientas fragmentadas y reglas imposibles de automatizar.</p></article>
+          </div>
+        </section>
+
+        <!-- 3 · Solución -->
+        <section class="slide slide-solution" data-title="La solución" data-id="solucion">
+          <div class="col-left">
+            <p class="eyebrow" data-a="up">02 · La solución</p>
+            <h2 class="title" data-a="words">Una plataforma. <em>Tres experiencias</em> conectadas al mismo expediente.</h2>
+            <ol class="pillars" data-a="stagger">
+              <li><span class="pill-num">1</span><div><h3>Comunicación y captación</h3><p>Campañas segmentadas, recordatorios automáticos y respuesta del cliente que abre su expediente sin intervención.</p></div></li>
+              <li><span class="pill-num">2</span><div><h3>Gestión de expedientes</h3><p>Flujo guiado por fases y roles: honorarios, validaciones, PBC, documentación, borrador, 720, presentación y cierre.</p></div></li>
+              <li><span class="pill-num">3</span><div><h3>Portal del cliente</h3><p>Un espacio privado para responder, firmar la propuesta, aportar documentos y aceptar el borrador.</p></div></li>
+            </ol>
+          </div>
+          <div class="hub" aria-hidden="true">
+            <svg class="hub-lines" viewBox="0 0 760 700">
+              <path id="hl1" d="M380 350 C 300 250, 220 190, 150 120"/>
+              <path id="hl2" d="M380 350 C 470 250, 540 190, 610 120"/>
+              <path id="hl3" d="M380 350 C 380 470, 380 540, 380 610"/>
+              <path id="hl4" d="M380 350 C 250 380, 150 400, 70 420"/>
+              <path id="hl5" d="M380 350 C 510 380, 610 400, 690 420"/>
+              <path id="hl6" d="M380 350 C 290 470, 200 540, 140 600"/>
+              <path id="hl7" d="M380 350 C 470 470, 560 540, 620 600"/>
+            </svg>
+            <div class="hub-core"><span class="hub-ring"></span><svg><use href="#i-layers"/></svg><b>Expediente único</b><small>Fuente de verdad · historial completo</small></div>
+            <div class="hub-node n1" style="left:150px;top:120px"><svg><use href="#i-send"/></svg><span>Comunicación</span></div>
+            <div class="hub-node n2" style="left:610px;top:120px"><svg><use href="#i-file"/></svg><span>Gestión interna</span></div>
+            <div class="hub-node n3" style="left:380px;top:610px"><svg><use href="#i-user"/></svg><span>Portal cliente</span></div>
+            <div class="hub-sat" style="left:70px;top:420px"><svg><use href="#i-pen"/></svg>Firma electrónica</div>
+            <div class="hub-sat" style="left:690px;top:420px"><svg><use href="#i-db"/></svg>ERP NAV</div>
+            <div class="hub-sat" style="left:140px;top:600px"><svg><use href="#i-chat"/></svg>Teams y correo</div>
+            <div class="hub-sat" style="left:620px;top:600px"><svg><use href="#i-sparkles"/></svg>Extractor IA 720</div>
+          </div>
+        </section>
+
+        <!-- 4 · Demo -->
+        <section class="slide slide-demo" data-title="Demo" data-id="demo">
+          <div class="demo-head">
+            <div>
+              <p class="eyebrow">03 · Demo del ciclo completo</p>
+              <h2 class="title-sm">Así funcionaría una campaña, <em>de principio a fin</em>.</h2>
+            </div>
+            <p class="demo-note">Capturas del prototipo funcional · datos ficticios</p>
+          </div>
+
+          <div class="demo-body">
+            <div class="browser">
+              <div class="browser-bar">
+                <span class="dots"><i></i><i></i><i></i></span>
+                <div class="url"><svg><use href="#i-lock"/></svg><span id="demoUrl">campanas.rcd.legal/login</span></div>
+                <span class="view-badge" id="demoView"><svg><use href="#i-users"/></svg><span>Equipo RCD</span></span>
+              </div>
+              <div class="screen" id="demoScreen">
+                <div class="zoom" id="demoZoom">
+                  <div class="shots" id="demoShots"></div>
+                  <div class="fx" id="demoFx"></div>
+                  <div class="cursor" id="demoCursor"><svg viewBox="0 0 24 24"><path d="M4 2.5 19.5 13l-7 1.4 3.9 7.3-2.7 1.4-3.9-7.3L4.8 20Z"/></svg></div>
+                </div>
+                <div class="toasts" id="demoToasts"></div>
+                <div class="caption" id="demoCaption">
+                  <div class="caption-meta"><span class="actor" id="capActor">Equipo</span><span id="capStep">Paso 1 de 18</span></div>
+                  <h3 id="capTitle">—</h3>
+                  <p id="capText">—</p>
+                </div>
+                <div class="endcard" id="demoEnd">
+                  <div class="endcard-inner">
+                    <span class="end-icon"><svg><use href="#i-check"/></svg></span>
+                    <h3>Ciclo completo</h3>
+                    <p>Del correo de invitación al expediente cerrado: cada paso trazado, cada decisión en manos de la persona adecuada.</p>
+                    <div class="end-actions">
+                      <button class="btn btn-light" type="button" data-demo="restart"><svg><use href="#i-restart"/></svg> Volver a empezar</button>
+                      <button class="btn btn-primary" type="button" data-next>Continuar <svg><use href="#i-arrow"/></svg></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <aside class="demo-side">
+              <div class="side-card">
+                <div class="side-head"><h4>Recorrido</h4><span id="phaseCount">Fase 1 de 8</span></div>
+                <ol class="phases" id="demoPhases"></ol>
+              </div>
+              <div class="side-card">
+                <div class="side-head"><h4>Campaña en directo</h4><span class="live"><i></i>Ejemplo</span></div>
+                <div class="kpis">
+                  <div><b id="kInv">0</b><span>Invitados</span></div>
+                  <div><b id="kResp">0</b><span>Aceptan</span></div>
+                  <div><b id="kAct">0</b><span>En curso</span></div>
+                  <div><b id="kClose">0</b><span>Cerrados</span></div>
+                </div>
+                <div class="chart-box"><canvas id="demoChart"></canvas></div>
+              </div>
+              <div class="side-card feed-card">
+                <div class="side-head"><h4>Actividad</h4><span>Automática y manual</span></div>
+                <ul class="feed" id="demoFeed"></ul>
+              </div>
+            </aside>
+          </div>
+
+          <div class="controls" role="group" aria-label="Controles de la demo">
+            <button class="ctl" type="button" data-demo="restart" title="Volver a empezar (R)" aria-label="Volver a empezar"><svg><use href="#i-restart"/></svg></button>
+            <button class="ctl" type="button" data-demo="prev" title="Paso anterior (←)" aria-label="Paso anterior"><svg><use href="#i-prev"/></svg></button>
+            <button class="ctl ctl-main" type="button" data-demo="toggle" id="btnPlay" title="Pausa / reanudar (Espacio)" aria-label="Pausa"><svg><use href="#i-pause"/></svg></button>
+            <button class="ctl" type="button" data-demo="next" title="Paso siguiente (→)" aria-label="Paso siguiente"><svg><use href="#i-next"/></svg></button>
+            <div class="track" id="demoTrack" title="Ir a un punto de la demo">
+              <div class="track-fill" id="demoFill"></div>
+              <div class="track-ticks" id="demoTicks"></div>
+              <div class="track-knob" id="demoKnob"></div>
+            </div>
+            <span class="time" id="demoTime">0:00 / 0:00</span>
+            <button class="ctl ctl-speed" type="button" data-demo="speed" id="btnSpeed" title="Velocidad">1×</button>
+          </div>
+        </section>
+
+        <!-- 5 · Control humano -->
+        <section class="slide slide-control" data-title="Vuestras reglas" data-id="reglas">
+          <p class="eyebrow" data-a="up">04 · Diseñado con vuestras reglas</p>
+          <h2 class="title" data-a="words">Automatiza lo repetitivo. <em>Deja al experto</em> lo importante.</h2>
+          <div class="flow" data-flow>
+            <svg class="flow-line" viewBox="0 0 1480 60" preserveAspectRatio="none"><path d="M20 30 H1460"/></svg>
+            <div class="flow-nodes">
+              <div class="fnode auto"><span class="fdot"><svg><use href="#i-send"/></svg></span><b>Invitación</b><small>Automático</small></div>
+              <div class="fnode auto"><span class="fdot"><svg><use href="#i-bell"/></svg></span><b>Recordatorios</b><small>Automático</small></div>
+              <div class="fnode human"><span class="fdot"><svg><use href="#i-pen"/></svg></span><b>Honorarios</b><small>Socio aprueba</small></div>
+              <div class="fnode human"><span class="fdot"><svg><use href="#i-shield"/></svg></span><b>PBC y NAV</b><small>Decisión humana</small></div>
+              <div class="fnode auto"><span class="fdot"><svg><use href="#i-upload"/></svg></span><b>Documentos</b><small>Avisos automáticos</small></div>
+              <div class="fnode human"><span class="fdot"><svg><use href="#i-file"/></svg></span><b>Borrador / Excel</b><small>Profesional revisa</small></div>
+              <div class="fnode auto"><span class="fdot"><svg><use href="#i-sparkles"/></svg></span><b>Extractor 720</b><small>IA asistida</small></div>
+              <div class="fnode human"><span class="fdot"><svg><use href="#i-flag"/></svg></span><b>Presentación</b><small>Profesional registra</small></div>
+            </div>
+          </div>
+          <div class="rules" data-a="stagger">
+            <div class="rule"><svg><use href="#i-check-circle"/></svg><p><b>La PH nunca sale sola.</b> El socio la revisa y el profesional la envía; si el cliente la rechaza, se renegocia con una nueva versión.</p></div>
+            <div class="rule"><svg><use href="#i-check-circle"/></svg><p><b>PBC e IT, separados.</b> Una incidencia técnica del extractor no bloquea ni contamina la valoración de prevención de blanqueo.</p></div>
+            <div class="rule"><svg><use href="#i-check-circle"/></svg><p><b>El cliente decide cuándo entrega.</b> Botón explícito de entrega de documentación y aviso inmediato a su profesional.</p></div>
+            <div class="rule"><svg><use href="#i-check-circle"/></svg><p><b>Alta en NAV y carga en Criteria controladas.</b> Registro manual con fecha, versión y referencia, siempre trazado.</p></div>
+            <div class="rule"><svg><use href="#i-check-circle"/></svg><p><b>Avisos donde ya trabajáis.</b> Notificación por Teams al responsable cuando su cliente acepta o entrega documentos.</p></div>
+            <div class="rule"><svg><use href="#i-check-circle"/></svg><p><b>Cierre con evidencias.</b> Presentación, justificante según quién presenta y factura enviada antes de cerrar.</p></div>
+          </div>
+        </section>
+
+        <!-- 6 · Impacto -->
+        <section class="slide slide-impact" data-title="Impacto" data-id="impacto">
+          <div class="impact-head">
+            <div>
+              <p class="eyebrow" data-a="up">05 · Impacto esperado</p>
+              <h2 class="title" data-a="words">Menos seguimiento. <em>Más tiempo</em> para vuestros clientes.</h2>
+            </div>
+            <div class="big-number" data-a="scale"><b>−<span data-count="67">0</span>%</b><span>pasos manuales por expediente</span></div>
+          </div>
+          <div class="chart-row">
+            <figure class="chart-card" data-a="up">
+              <figcaption><h4>Pasos manuales por fase</h4><span>Hoy frente a la plataforma</span></figcaption>
+              <div class="chart-wrap"><canvas id="chartSteps"></canvas></div>
+            </figure>
+            <figure class="chart-card" data-a="up">
+              <figcaption><h4>¿Quién hace cada paso?</h4><span>Reparto con la plataforma</span></figcaption>
+              <div class="chart-wrap doughnut-wrap"><canvas id="chartSplit"></canvas><div class="doughnut-center"><b data-count="33">0</b><small>pasos del flujo</small></div></div>
+            </figure>
+            <figure class="chart-card" data-a="up">
+              <figcaption><h4>Objetivos de RCD</h4><span>Situación actual frente a la plataforma</span></figcaption>
+              <div class="chart-wrap"><canvas id="chartGoals"></canvas></div>
+            </figure>
+          </div>
+          <p class="footnote" data-a="fade">Estimación orientativa a partir de los flujos «Rentas v7» y «720 v5». Las cifras definitivas se validarán con RCD en la fase de diseño.</p>
+        </section>
+
+        <!-- 7 · Hoja de ruta -->
+        <section class="slide slide-roadmap" data-title="Hoja de ruta" data-id="plan">
+          <div class="roadmap-grid">
+            <div class="col-left">
+              <p class="eyebrow" data-a="up">06 · Hoja de ruta</p>
+              <h2 class="title" data-a="words">De prototipo a producción en <em>13–15 semanas</em>.</h2>
+              <p class="lead" data-a="up">No empezamos de cero: el recorrido que acabáis de ver ya funciona como prototipo y sirve de especificación viva.</p>
+              <div class="headstart" data-a="stagger">
+                <div><b data-count="10">0</b><span>módulos funcionales prototipados</span></div>
+                <div><b data-count="18">0</b><span>escenarios de negocio demostrables</span></div>
+                <div><b data-count="9">0</b><span>perfiles con su propia vista</span></div>
+              </div>
+              <div class="targets" data-a="stagger">
+                <div class="target"><span class="t-badge">720</span><p><b>Campaña Modelo 720</b><small>Declaración de enero a marzo</small></p></div>
+                <div class="target"><span class="t-badge renta">Renta</span><p><b>Campaña de Renta</b><small>Declaración de abril a junio</small></p></div>
+              </div>
+            </div>
+            <figure class="chart-card gantt-card" data-a="up">
+              <figcaption><h4>Plan de trabajo</h4><span>Semanas desde el arranque</span></figcaption>
+              <div class="chart-wrap"><canvas id="chartGantt"></canvas></div>
+            </figure>
+          </div>
+        </section>
+
+        <!-- 8 · Cierre -->
+        <section class="slide slide-cta" data-title="Siguiente paso" data-id="siguiente">
+          <div class="cta-inner">
+            <p class="eyebrow" data-a="up">07 · Siguiente paso</p>
+            <h2 class="display" data-a="words">¿Preparamos juntos <em>la próxima campaña</em>?</h2>
+            <div class="next-steps" data-a="stagger">
+              <div class="nstep"><span>1</span><h3>Validar alcance</h3><p>Repasamos el prototipo con vuestros equipos y cerramos las decisiones pendientes: identidad, integraciones y reglas.</p></div>
+              <div class="nstep"><span>2</span><h3>Kick-off</h3><p>Plan de datos de clientes, entornos, responsables por perfil y calendario de entregas.</p></div>
+              <div class="nstep"><span>3</span><h3>Primera campaña</h3><p>Puesta en marcha acompañada, formación y soporte cercano durante la primera campaña real.</p></div>
+            </div>
+            <div class="cta-actions" data-a="up">
+              <button class="btn btn-primary btn-lg" type="button" id="btnAccept"><svg><use href="#i-check"/></svg> Aceptar la propuesta</button>
+              <button class="btn btn-ghost" type="button" data-goto="demo"><svg><use href="#i-restart"/></svg> Ver la demo otra vez</button>
+            </div>
+            <p class="thanks" id="thanks" aria-live="polite"></p>
+          </div>
+          <canvas class="confetti" id="confetti" aria-hidden="true"></canvas>
+        </section>
+
+      </main>
+
+      <footer class="bottom">
+        <div class="progress"><span id="deckProgress"></span></div>
+        <p class="hint"><kbd>←</kbd><kbd>→</kbd> navegar · <kbd>Espacio</kbd> pausa en la demo · <kbd>R</kbd> reiniciar demo · <kbd>F</kbd> pantalla completa</p>
+      </footer>
+    </div>
+  </div>
+
+  <script src="vendor/gsap.min.js"></script>
+  <script src="vendor/chart.umd.min.js"></script>
+  <script src="capturas/puntos.js"></script>
+  <script src="js/fondo.js"></script>
+  <script src="js/graficos.js"></script>
+  <script src="js/demo.js"></script>
+  <script src="js/presentacion.js"></script>
+</body>
+</html>

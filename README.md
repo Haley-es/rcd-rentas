@@ -128,5 +128,6 @@ Fechas, checklists, tarifas y estructura del Excel son ilustrativos. Las plantil
 - [Escenarios](app/data/seed.ts): datos ficticios reproducibles.
 - [PRDs](docs/prds): requisitos derivados de las fuentes, con trazabilidad y criterios de aceptación.
 - [Tests unitarios](tests/unit/workflow.test.ts) y [E2E](tests/e2e/app.spec.ts): umbrales exactos, aislamiento, bloqueos, versionado, carga documental, ramas fiscales y responsive móvil.
+- [Presentación comercial](presentacion/README.md): web estática independiente con demo animada del ciclo completo sobre capturas del prototipo.
 
 Los módulos implementados se trasladan de [todo](docs/prds/todo) a [done](docs/prds/done) después de validar sus recorridos de mockup. «Done» describe el prototipo, no una integración o servicio real.
