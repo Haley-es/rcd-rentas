@@ -1,0 +1,5 @@
+- Always use the skill `/caveman`.
+- Working on a GitHub issue, implement it directly. Do not ask whether work should stay local, be committed, or close the issue.
+- When the user says `haz la issue <number>`, implement and validate it, commit with the issue ID, push to `develop`, close the issue, and verify the issue is closed. An explicit delivery instruction in the same request overrides this default.
+- `gh auth status` can falsely report an invalid token inside the sandbox. Verify access with the requested read-only `gh issue view <number>` command using network escalation; request reauthentication only if that command returns an authentication error. Treat proxy connection failures as environment failures, not expired credentials.
+- on commit add the github issue(s) id(s) with a #ID #ID2 - description of the task, if no there is no github issue then don't put the #
