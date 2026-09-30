@@ -4,6 +4,8 @@ Mockup interactivo de la digitalización de campañas de Renta y Modelo 720, con
 
 **No es una aplicación de producción.** Los escenarios, nombres, correos, honorarios y plazos son ficticios. El estado y los metadatos se conservan en SQL Server local mediante Prisma. Los archivos seleccionados se transmiten y guardan como bytes reales en disco privado local: utiliza exclusivamente muestras autorizadas, sin información personal real. Identidad/MFA, correo/Teams, firma, extractor, presentación, NAV y Criteria siguen simulados y sin integraciones.
 
+El [PRD 11: aplicación final y puesta en producción](docs/prds/todo/11-aplicacion-final-y-puesta-en-produccion.md) recoge el trabajo pendiente, incluido el registro de clientes, las prioridades, las decisiones que debe aprobar RCD y los criterios de aceptación. Es una hoja de ruta, no funcionalidad implementada.
+
 ## Puesta en marcha
 
 Requiere Node.js `^22.19.0`, `^24.11.0` o `>=26` y pnpm `11.2.0`. Validado con Node `24.18.0`. El comando de reconciliación utiliza los hooks y el soporte TypeScript nativo de Node 24; usa Node 24 para esta entrega.

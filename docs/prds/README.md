@@ -1,4 +1,4 @@
-# PRDs: mockup histórico y prototipo local
+# PRDs: mockup histórico, prototipo local y aplicación final
 
 La documentación original se analizó antes de implementar las pantallas. Los siete PRDs históricos separan requisitos explícitos de supuestos de diseño y conservan referencias a los PDF y a las aclaraciones del correo. Los PRDs 08–10 incorporan una petición posterior: convertir el mockup en un prototipo local con acceso de dos pasos simulado, persistencia SQL Server y archivos locales reales.
 
@@ -22,6 +22,12 @@ Cada PRD histórico pasó primero por `todo` y se movió a `done` tras implement
 
 08, 09 y 10 se han movido a `done` después de implementar y validar sus respectivos alcances locales. Se guardan bytes reales aportados expresamente; el seed sigue siendo solo metadatos y los artefactos son TXT/CSV ficticios. NAV, Criteria, correo/Teams, firma, extractor y presentación continúan simulados; no se añaden integraciones externas.
 
+## Aplicación final: pendiente
+
+11. [Aplicación final y puesta en producción](todo/11-aplicacion-final-y-puesta-en-produccion.md): **pendiente de implementación**. PRD marco con las carencias del prototipo, registro y activación del cliente, identidad/MFA reales, autorización por expediente, documentos seguros, reglas e integraciones de negocio, privacidad y operación. Define prioridades P0/P1/P2, decisiones y responsables, dependencias y 24 criterios con pruebas Playwright y comprobaciones complementarias.
+
+El PRD 11 es una hoja de ruta, no una entrega implementada ni una auditoría. Debe desglosarse en PRDs ejecutables tras acordar el alcance con RCD. Los trámites manuales pueden mantenerse si se aprueban y conservan evidencia real; identidad, permisos y resultados ficticios no son aceptables en producción.
+
 ### Dependencias y contratos de implementación
 
 El orden acordado es **08, después 09, después 10**. 08 puede ejecutarse sobre el mockup en memoria; 09 necesita sus helpers de sesión/origen y 10 necesita ambos. No se requiere invertir 08 y 09 porque la sesión de 08 es efímera y no depende de tablas SQL.
@@ -35,7 +41,7 @@ El orden acordado es **08, después 09, después 10**. 08 puede ejecutarse sobre
 
 Cada PRD tiene su fichero Playwright exclusivo: `prototype-08-auth.spec.ts`, `prototype-09-persistence.spec.ts` y `prototype-10-files.spec.ts` dentro de `tests/e2e`. Las suites nuevas deben conservar los recorridos históricos, con login y reset autenticado explícito cuando corresponda. Las pruebas de persistencia/archivos usan SQL Server real y una BD/carpeta de pruebas aisladas, no fallback.
 
-El test documental `tests/unit/prds.test.ts` distingue los siete PRDs históricos y sus 73 criterios de los PRDs 08–10. Exige cada documento exactamente una vez, estado pendiente en `todo`, evidencia/estado validado en `done` y enlaces locales válidos, incluidos los pendientes. No confunde requisitos nuevos con entregas.
+El test documental `tests/unit/prds.test.ts` distingue los siete PRDs históricos y sus 73 criterios de los PRDs 08–10 y del marco pendiente 11. Exige cada documento exactamente una vez, estado pendiente en `todo`, evidencia/estado validado en `done` y enlaces locales válidos, incluidos los pendientes. También comprueba los 24 criterios del PRD 11. No confunde requisitos nuevos con entregas.
 
 ## Evidencia de implementación del mockup histórico
 

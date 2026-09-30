@@ -40,7 +40,19 @@ describe('Documentación y entrega de PRDs', () => {
         expect(text).toContain('## Evidencia de implementación')
       }
     }
-    expect(files.length + pending.length).toBe(10)
+    expect(files.length + pending.length).toBe(11)
+  })
+
+  it('mantiene el marco de aplicación final pendiente y sus 24 criterios', () => {
+    expect(files.filter(name => name.startsWith('11-'))).toEqual([])
+    const roadmap = pending.filter(name => name.startsWith('11-'))
+    expect(roadmap).toHaveLength(1)
+    const content = readFileSync(join(todo, roadmap[0]!), 'utf8')
+    expect(content).toContain('**Estado:** pendiente de implementación.')
+    expect(content).not.toContain('**Estado:** implementado y validado')
+    const criteria = content.match(/P11-CA\d{2}/g) ?? []
+    expect(criteria).toEqual(Array.from({ length: 24 }, (_, index) =>
+      `P11-CA${String(index + 1).padStart(2, '0')}`))
   })
 
   it('enlaces locales de PRDs y guía siguen válidos tras moverlos', () => {
