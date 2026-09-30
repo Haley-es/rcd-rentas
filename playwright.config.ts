@@ -5,13 +5,13 @@ export default defineConfig({
   fullyParallel: false,
   reporter: 'list',
   use: {
-    baseURL: 'http://127.0.0.1:3000',
+    baseURL: 'http://127.0.0.1:3010',
     trace: 'retain-on-failure',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
     command: 'pnpm dev',
-    url: 'http://127.0.0.1:3000',
+    url: 'http://127.0.0.1:3010',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

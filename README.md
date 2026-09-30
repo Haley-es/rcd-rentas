@@ -13,7 +13,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Abrir `http://127.0.0.1:3000`. El servidor solo escucha en la interfaz local.
+Abrir `http://127.0.0.1:3010`. Desarrollo, preview y tests E2E usan el puerto **3010** para evitar conflictos con otros proyectos en el puerto 3000. El servidor de desarrollo solo escucha en la interfaz local.
 
 ```powershell
 pnpm typecheck

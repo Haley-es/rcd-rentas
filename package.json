@@ -4,9 +4,9 @@
   "type": "module",
   "packageManager": "pnpm@11.2.0",
   "scripts": {
-    "dev": "nuxt dev --host 127.0.0.1",
+    "dev": "nuxt dev --host 127.0.0.1 --port 3010",
     "build": "nuxt build",
-    "preview": "nuxt preview",
+    "preview": "nuxt preview --port 3010",
     "postinstall": "nuxt prepare",
     "typecheck": "nuxt typecheck",
     "test": "vitest run",
