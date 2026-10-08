@@ -5,16 +5,19 @@ const { role, today, advanceDays, reset, setRole, pending: mutationPending, sync
 const dateText = computed(() => today.value ? dateLabel(today.value) : 'Sin sincronizar')
 const { session, logout, pending, error } = usePrototypeAuth()
 const username = computed(() => session.value.authenticated ? session.value.user.username : '')
+const { accessRole, isAdminIT } = useAccessRole()
 const route = useRoute()
 const mobileMenu = ref(false)
 const resetDialog = ref(false)
 const resetFeedback = ref('')
-const links = [
+const links = computed(() => [
   { to: '/', icon: 'pi pi-th-large', text: 'Vista general' },
   { to: '/expedientes', icon: 'pi pi-folder', text: 'Expedientes' },
   { to: '/campanas', icon: 'pi pi-send', text: 'Comunicación' },
   { to: '/tareas', icon: 'pi pi-check-square', text: 'Tareas y seguimiento' },
-]
+  { to: '/registro-cambios', icon: 'pi pi-history', text: 'Registro de cambios' },
+  ...(isAdminIT.value ? [{ to: '/papelera', icon: 'pi pi-trash', text: 'Papelera' }] : []),
+])
 const portal = computed(() => route.path.startsWith('/portal/'))
 async function changeRole(value: import('../types/domain').Role) {
   const result = await setRole(value)
@@ -46,7 +49,7 @@ async function confirmReset() { const result = await reset(); resetFeedback.valu
       </nav>
       <div class="sidebar-bottom">
         <div class="help-card"><i class="pi pi-sparkles" aria-hidden="true" /><strong>Todo bajo control.</strong><p>Una campaña, un espacio.<br>Del primer contacto al cierre.</p><span>Prototipo de producto</span></div>
-        <div class="user-card"><span class="avatar">LT</span><div>Lucía Torres<small>Equipo fiscal · Demo</small></div><i class="pi pi-ellipsis-h" aria-hidden="true" /></div>
+        <div class="user-card"><span class="avatar"><i class="pi pi-user" aria-hidden="true" /></span><div>{{ username }}<small>{{ accessRole }}</small></div></div>
       </div>
     </aside>
     <div class="main-shell">

@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import { existsSync, readFileSync, unlinkSync } from 'node:fs'
 import { test as base, expect } from '@playwright/test'
 import { deployPrototypeTestDatabase, prototypeTestDatabaseURL } from '../../../scripts/prototype-e2e.mjs'
+import { prototypeAdminEnvironment } from './prototype-admin'
 
 export interface PrototypeTestServer {
   pid: number
@@ -42,7 +43,7 @@ export async function startPrototypeTestServer(): Promise<PrototypeTestServer & 
       resolve('node_modules', 'nuxt', 'bin', 'nuxt.mjs'), 'dev',
       resolve('tests', 'e2e', 'fixtures', 'persistence'),
       '--host', '127.0.0.1', '--port', '3011', '--no-fork',
-    ], { cwd: process.cwd(), env: { ...process.env, DATABASE_URL: database, PROTOTYPE_UPLOAD_DIR: prototypeUploadRoot }, stdio: ['ignore', 'pipe', 'pipe'] })
+    ], { cwd: process.cwd(), env: { ...process.env, ...prototypeAdminEnvironment, DATABASE_URL: database, PROTOTYPE_UPLOAD_DIR: prototypeUploadRoot }, stdio: ['ignore', 'pipe', 'pipe'] })
     child.stdout?.on('data', chunk => { logs = `${logs}${chunk}`.slice(-4000) })
     child.stderr?.on('data', chunk => { logs = `${logs}${chunk}`.slice(-4000) })
     const deadline = Date.now() + 120_000

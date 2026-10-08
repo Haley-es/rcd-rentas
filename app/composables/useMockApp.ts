@@ -3,7 +3,7 @@ import type { ActionResult, Role, WorkflowAction } from '../types/domain'
 import type { PrototypeCommand, PrototypeCommandResult, PrototypePortalSnapshot, PrototypeSnapshot } from '../../shared/types/prototype'
 import type { PrototypeFileDescriptor } from '../../shared/types/prototype-files'
 
-interface ScopeActivity { generation: number; scope: string; loading?: Promise<boolean> }
+interface ScopeActivity { generation: number; scope: string; path: string; token: unknown; loading?: Promise<boolean> }
 const activities = new WeakMap<NuxtApp, ScopeActivity>()
 
 export function useMockApp() {
@@ -20,7 +20,7 @@ export function useMockApp() {
   const synchronized = useState('prototype-synchronized', () => false)
   const confirmedScope = useState('prototype-scope', () => '')
   let active = activities.get(app)
-  if (!active) { active = { generation: 0, scope: '' }; activities.set(app, active) }
+  if (!active) { active = { generation: 0, scope: '', path: route.value.path, token: route.value.query.token }; activities.set(app, active) }
   const activity = active
   const current = computed(() => portalSnapshot.value ?? snapshot.value)
   const ready = computed(() => current.value != null && confirmedScope.value === scopeUrl(route.value.path, route.value.query.token))
@@ -62,6 +62,8 @@ export function useMockApp() {
       synchronized.value = false
     }
     activity.scope = url
+    activity.path = path
+    activity.token = token
     loading.value = true
     const work = (async () => {
       try {
@@ -107,7 +109,10 @@ export function useMockApp() {
         method: 'POST', body: { datasetId: sentDataset, expectedRevision: revision.value, command },
       })
       if (commandScope !== activity.scope || sentDataset !== datasetId.value) {
-        await refresh()
+        // Middleware can load its destination while the router still points at the old
+        // page. Keep that scope, then read the confirmed command without replaying it.
+        if (activity.loading) await activity.loading
+        await refresh(activity.path, activity.token)
         return { ok: false, message: 'Ámbito cambiado durante la petición. Se ha consultado el resultado confirmado; no se ha repetido la acción.' }
       }
       if (result.revision >= revision.value) {
@@ -138,6 +143,8 @@ export function useMockApp() {
   const reset = () => command({ type: 'reset-demo', confirm: true })
   const inviteMany = (caseIds: string[]) => command({ type: 'invite-many', caseIds })
   const evaluateFollowups = () => command({ type: 'evaluate-followups' })
+  const deleteCase = (caseId: string) => command({ type: 'delete-case', caseId, confirm: true })
+  const restoreCase = (historyId: string) => command({ type: 'restore-case', historyId, confirm: true })
   function fileBase(caseId: string, portal: boolean) {
     return `/api/prototype/${portal ? 'portal' : 'cases'}/${encodeURIComponent(caseId)}/files`
   }
@@ -150,7 +157,11 @@ export function useMockApp() {
     const commandScope = activity.scope
     try {
       const result = await request<PrototypeCommandResult>(`${fileBase(caseId, portal)}${suffix}${portal ? portalQuery() : ''}`, { method: 'POST', body })
-      if (commandScope !== activity.scope) { await refresh(); return { ok: false, message: 'Ámbito cambiado. Consulta el resultado; no se ha repetido la carga.' } }
+      if (commandScope !== activity.scope) {
+        if (activity.loading) await activity.loading
+        await refresh(activity.path, activity.token)
+        return { ok: false, message: 'Ámbito cambiado. Consulta el resultado; no se ha repetido la carga.' }
+      }
       if (result.snapshot) accept(result.snapshot)
       return result
     } catch (cause) {
@@ -188,5 +199,6 @@ export function useMockApp() {
   }
   return { cases, role, today, teams, signatureEmail, documentReminderDays, act, actPortal, advanceDays, reset,
     setRole, setSettings, inviteMany, evaluateFollowups, ready, pending, loading, error, synchronized,
-    revision, datasetId, refresh, files, uploadDocument, downloadFile, generateDemoArtifacts, portalSnapshot: computed(() => portalSnapshot.value) }
+    revision, datasetId, refresh, files, uploadDocument, downloadFile, generateDemoArtifacts, deleteCase, restoreCase,
+    portalSnapshot: computed(() => portalSnapshot.value) }
 }

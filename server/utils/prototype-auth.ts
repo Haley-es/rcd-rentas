@@ -4,12 +4,16 @@ import {
 } from 'h3'
 import type { PrototypeAuthErrorCode, PrototypeSession } from '../../shared/types/prototype-auth'
 import { useRuntimeConfig } from '#imports'
+import type { AccessRole } from '../../shared/types/access-role'
+import { resolvePrototypeAccessRole } from './prototype-access-role'
+import { isPrototypeLocalHostname } from '../../shared/utils/prototype-local-host'
 import {
   createPrototypeAuthStore, PROTOTYPE_CHALLENGE_TTL_MS, PROTOTYPE_SESSION_TTL_MS,
 } from './prototype-auth-store'
 
 export interface PrototypeSessionContext {
   username: string
+  accessRole: AccessRole
   sessionId: string
   expiresAt: number
 }
@@ -110,7 +114,7 @@ export function prototypeAuthText(value: unknown, label: string): string {
 }
 
 function sessionDto(record: PrototypeSessionContext): PrototypeSession {
-  return { authenticated: true, user: { username: record.username }, expiresAt: new Date(record.expiresAt).toISOString() }
+  return { authenticated: true, user: { username: record.username, accessRole: record.accessRole }, expiresAt: new Date(record.expiresAt).toISOString() }
 }
 
 export function getPrototypeSession(event: H3Event): PrototypeSession {
@@ -120,15 +124,20 @@ export function getPrototypeSession(event: H3Event): PrototypeSession {
   return { authenticated: false, pendingMfa: Boolean(store.challenge(getCookie(event, PROTOTYPE_CHALLENGE_COOKIE))) }
 }
 
-export function beginPrototypeLogin(event: H3Event, username: string): { next: '/mfa' } {
+export async function beginPrototypeLogin(event: H3Event, username: string, password: string): Promise<{ next: '/mfa' }> {
   store.revoke(getCookie(event, PROTOTYPE_SESSION_COOKIE), getCookie(event, PROTOTYPE_CHALLENGE_COOKIE))
   clearCookies(event)
-  const challenge = store.begin(username)
+  const accessRole = await resolvePrototypeAccessRole(username, password, config)
+  if (!accessRole) failure(401, 'AUTH_CREDENTIALS_INVALID', 'Credenciales incorrectas.')
+  const challenge = store.begin(username, accessRole)
   writeCookie(event, PROTOTYPE_CHALLENGE_COOKIE, challenge.id, challenge.expiresAt)
   return { next: '/mfa' }
 }
 
 export function completePrototypeMfa(event: H3Event): PrototypeSession {
+  if (!isPrototypeLocalHostname(requestUrl(event).hostname)) {
+    failure(403, 'MFA_LOCAL_ONLY', 'El MFA simulado solo está disponible en localhost.')
+  }
   const session = store.consume(getCookie(event, PROTOTYPE_CHALLENGE_COOKIE))
   if (!session) {
     deleteCookie(event, PROTOTYPE_CHALLENGE_COOKIE, cookieOptions(event))

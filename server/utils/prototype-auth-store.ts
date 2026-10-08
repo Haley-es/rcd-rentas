@@ -1,14 +1,18 @@
+import type { AccessRole } from '../../shared/types/access-role'
+
 export const PROTOTYPE_CHALLENGE_TTL_MS = 5 * 60 * 1000
 export const PROTOTYPE_SESSION_TTL_MS = 8 * 60 * 60 * 1000
 
 export interface PrototypeAuthRecord {
   username: string
+  accessRole: AccessRole
   sessionId: string
   expiresAt: number
 }
 
 interface Challenge {
   username: string
+  accessRole: AccessRole
   expiresAt: number
 }
 
@@ -42,10 +46,10 @@ export function createPrototypeAuthStore(options: {
     if (sessionId) sessions.delete(sessionId)
     if (challengeId) challenges.delete(challengeId)
   }
-  function begin(username: string) {
+  function begin(username: string, accessRole: AccessRole = 'Empleado') {
     prune()
     const id = identifier()
-    const record = { username, expiresAt: now() + challengeTtlMs }
+    const record = { username, accessRole, expiresAt: now() + challengeTtlMs }
     challenges.set(id, record)
     return { id, ...record }
   }
@@ -55,6 +59,7 @@ export function createPrototypeAuthStore(options: {
     challenges.delete(id)
     const record = {
       username: pending.username,
+      accessRole: pending.accessRole,
       sessionId: identifier(),
       expiresAt: now() + sessionTtlMs,
     }

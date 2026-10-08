@@ -45,6 +45,7 @@ const start = new Date('2026-10-01T10:00:00Z')
 await page.clock.install({ time: start })
 await page.clock.pauseAt(new Date(start.getTime() + 1000))
 await page.addInitScript(() => {
+  window.__grabandoVideo = true
   window.__sfxLog = []
   window.addEventListener('sfx', (e) => window.__sfxLog.push({ ...e.detail, t: performance.now() }))
 })

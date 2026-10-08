@@ -758,14 +758,14 @@
   function seekStep(i) {
     const idx = Math.max(0, Math.min(STEPS.length - 1, i))
     hideEnd()
-    tl.seek(`s${idx}`, false)
+    window.Sonido.silenciar(() => tl.seek(`s${idx}`, false))
     sync()
     updatePlayIcon()
   }
 
   function seekProgress(p) {
     hideEnd()
-    tl.progress(Math.max(0, Math.min(0.999, p)), false)
+    window.Sonido.silenciar(() => tl.progress(Math.max(0, Math.min(0.999, p)), false))
     sync()
   }
 

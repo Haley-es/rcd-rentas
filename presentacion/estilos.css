@@ -46,6 +46,12 @@ em { font-style: normal; color: var(--forest); background: linear-gradient(trans
 .slide-counter b { color: var(--ink); font-size: 15px; }
 .icon-btn { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255,255,255,.7); display: grid; place-items: center; color: var(--ink); font-size: 18px; }
 .icon-btn:hover { background: #fff; }
+.icon-btn[aria-pressed="true"] { background: var(--forest); border-color: var(--forest); color: var(--lime); }
+.icon-btn[aria-pressed="true"]:hover { background: var(--forest-2); }
+.icon-btn { position: relative; transition: background .25s, color .25s, border-color .25s; }
+#btnMusic[aria-pressed="false"]::after { content: ""; position: absolute; left: 7px; right: 7px; top: 50%; height: 2px; margin-top: -1px; background: currentColor; border-radius: 2px; box-shadow: 0 0 0 1.5px #fff; transform: rotate(45deg); }
+#btnMusic.is-loading svg { animation: musicPulse .8s ease-in-out infinite alternate; }
+@keyframes musicPulse { from { opacity: .35; transform: scale(.85); } to { opacity: 1; transform: scale(1.05); } }
 
 .bottom { position: absolute; left: 40px; right: 40px; bottom: 12px; height: 24px; display: flex; align-items: center; gap: 24px; z-index: 20; }
 .progress { flex: 1; height: 3px; background: var(--line); border-radius: 3px; overflow: hidden; }

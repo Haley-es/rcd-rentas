@@ -129,6 +129,7 @@ const invoiceDownload = () => artifactDownload('invoice')
     </section>
     <Message v-if="rowsStale" severity="warn" role="alert">Edición obsoleta conservada. Revisa filas frente al estado confirmado.<Button label="Confirmar edición revisada" :disabled="pending" @click="rebaseRows" /></Message>
     <NuxtLink to="/expedientes" class="back-link"><i class="pi pi-arrow-left" />Todos los expedientes</NuxtLink>
+    <CaseRecordActions :case-id="item.id" :name="item.name" labelled />
     <div class="page-heading detail-heading"><div class="client-title"><span class="avatar large" :class="item.campaign === '720' ? 'lavender' : 'mint'">{{ initials(item.name) }}</span><div><p class="eyebrow">{{ item.id }} · EJERCICIO 2025</p><h1>{{ item.name }}</h1><p>{{ item.email }} · {{ item.segment }}</p></div></div><div class="heading-actions"><Tag :value="stage(item)" :severity="statusSeverity(item.tax.state)" /><NuxtLink :to="`/portal/${item.id}?token=demo-${item.id}`" class="primary-link"><i class="pi pi-external-link" />Previsualizar portal</NuxtLink></div></div>
     <div v-if="feedback" role="status" aria-live="polite" class="feedback"><Message :severity="feedback.ok ? 'success' : 'error'">{{ feedback.message }}</Message></div>
     <Message v-if="readonly" severity="info" class="feedback">Solo consulta. {{ item.tax.state === 'Cerrado' ? 'Expediente cerrado. No implica factura pagada.' : 'Cliente fuera de campaña; no habrá seguimientos.' }}</Message>

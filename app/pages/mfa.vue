@@ -13,7 +13,7 @@ async function submit() {
 
 <template>
   <h1>Confirmar MFA simulado</h1>
-  <p>Desafío válido durante 5 minutos. No se comprueba ningún OTP.</p>
+  <p>Desafío válido durante 5 minutos. En localhost se acepta cualquier código no vacío.</p>
   <form class="access-form" novalidate @submit.prevent="submit">
     <label for="mfa-code">Código MFA simulado</label>
     <InputText id="mfa-code" v-model="code" autocomplete="off" />

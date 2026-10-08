@@ -11,6 +11,8 @@ import { internalPrototypeSnapshot, mutatePrototype, newPrototypePayload, protot
 import { portalCase, projectPrototypePortal, type PrototypePortalScope } from './prototype-portal'
 import { prepareCommandArtifacts } from './prototype-artifacts'
 import { describePrototypeFiles } from './prototype-file-descriptors'
+import { restorePrototypeCase } from './prototype-history'
+import { canManageDeletedCases } from '../../shared/utils/prototype-history'
 
 const staff: Role[] = ['Profesional', 'Paralegal', 'Gestor de campañas']
 const permissions: Record<WorkflowAction['type'], Role[]> = {
@@ -53,6 +55,15 @@ export function applyPrototypeCommand(state: StoredPrototypeState, command: Prot
   }
   let result: AppliedCommand
   switch (command.type) {
+    case 'delete-case': {
+      if (!canManageDeletedCases(role)) prototypeFailure(403, 'ACTION_FORBIDDEN', 'Este rol no puede eliminar expedientes.')
+      const index = state.cases.findIndex(item => item.id === command.caseId)
+      if (index < 0) prototypeFailure(404, 'CASE_NOT_FOUND', 'Expediente no encontrado.')
+      state.cases.splice(index, 1)
+      return { changed: true, result: { ok: true, applied: 1, message: `Expediente ${command.caseId} enviado a la papelera. Datos y archivos conservados.` } }
+    }
+    case 'restore-case':
+      prototypeFailure(400, 'COMMAND_INVALID', 'Restauración requiere consultar el registro persistido.')
     case 'workflow': {
       const outcome = workflow(command.caseId, command.action)
       result = { ...outcome, applied: outcome.ok ? 1 : 0 }
@@ -132,7 +143,12 @@ export async function executePrototypeCommand(session: PrototypeSessionContext, 
   }
   const { state, result, cleanupPending } = await mutatePrototype({
     session, datasetId: envelope.datasetId, expectedRevision: envelope.expectedRevision,
+    actorRole: scope ? 'Cliente' : undefined,
     apply: async (state, tx) => {
+      if (envelope.command.type === 'restore-case') {
+        if (scope) prototypeFailure(403, 'ACTION_FORBIDDEN', 'El portal no puede restaurar expedientes.')
+        return restorePrototypeCase(state, tx, envelope.command.historyId, session)
+      }
       const mutation = applyPrototypeCommand(state, envelope.command, session.username, scope)
       if (mutation.changed) mutation.artifacts = await (prepareArtifacts ?
         prepareArtifacts({ state, command: envelope.command, tx }) :

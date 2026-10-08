@@ -26,6 +26,8 @@ export type PrototypeCommand =
   | { type: 'invite-many'; caseIds: string[] }
   | { type: 'evaluate-followups' }
   | { type: 'reset-demo'; confirm: true }
+  | { type: 'delete-case'; caseId: string; confirm: true }
+  | { type: 'restore-case'; historyId: string; confirm: true }
 
 export interface CommandEnvelope {
   datasetId: string

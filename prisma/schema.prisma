@@ -45,3 +45,23 @@ model PrototypeFile {
   @@unique([datasetId, caseId, category, anchor])
   @@index([datasetId, caseId])
 }
+
+model PrototypeChangeHistory {
+  id          String    @id @default(uuid()) @db.UniqueIdentifier
+  datasetId   String    @db.UniqueIdentifier
+  revision    Int
+  tableName   String    @db.VarChar(30)
+  recordId    String    @db.NVarChar(200)
+  recordLabel String    @db.NVarChar(200)
+  operation   String    @db.VarChar(10)
+  changedBy   String    @db.NVarChar(Max)
+  changedRole String    @db.NVarChar(50)
+  changedAt   DateTime  @default(now())
+  changes     String    @db.NVarChar(Max)
+  snapshot    String?   @db.NVarChar(Max)
+  restoredAt  DateTime?
+  recordDeleted Boolean @default(false)
+
+  @@index([datasetId, tableName, recordId, revision])
+  @@index([datasetId, operation, restoredAt])
+}

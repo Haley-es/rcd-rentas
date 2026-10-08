@@ -7,8 +7,8 @@ import { decodePrototypePayload } from '../../../server/utils/prototype-codec'
 export function prototypeTestPrisma() {
   return new PrismaClient({ datasourceUrl: prototypeTestDatabaseURL(), errorFormat: 'minimal', log: [] })
 }
-export async function loginPrototypeAPI(request: APIRequestContext, origin: string, username = 'operador demo') {
-  expect((await request.post('/api/auth/login', { headers: { Origin: origin }, data: { username, password: '!' } })).status()).toBe(200)
+export async function loginPrototypeAPI(request: APIRequestContext, origin: string, username = 'operador demo', password = '!') {
+  expect((await request.post('/api/auth/login', { headers: { Origin: origin }, data: { username, password } })).status()).toBe(200)
   expect((await request.post('/api/auth/mfa', { headers: { Origin: origin }, data: { code: 'texto' } })).status()).toBe(200)
 }
 export async function prototypeState(request: APIRequestContext): Promise<PrototypeSnapshot> {

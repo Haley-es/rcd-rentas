@@ -28,7 +28,8 @@ describe('Registro efímero de autenticación', () => {
     expect(session.sessionId).toMatch(/^[a-f0-9]{64}$/)
     expect(session.sessionId).not.toBe(challenge.id)
     expect(session.username).toBe('Usuario')
-    expect(Object.keys(session).sort()).toEqual(['expiresAt', 'sessionId', 'username'])
+    expect(Object.keys(session).sort()).toEqual(['accessRole', 'expiresAt', 'sessionId', 'username'])
+    expect(session.accessRole).toBe('Empleado')
     expect(store.consume(challenge.id)).toBeUndefined()
     expect(session.expiresAt).toBe(now + 28_800_000)
     now += 28_799_999

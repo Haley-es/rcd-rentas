@@ -14,9 +14,9 @@ const { today } = useMockApp()
     </Column>
     <Column header="CAMPAÑA" field="campaign" sortable><template #body="{ data }"><span class="campaign-badge" :class="{ model: data.campaign === '720' }">{{ data.campaign === '720' ? 'Modelo 720' : 'Renta' }}</span></template></Column>
     <Column header="FASE"><template #body="{ data }"><Tag :value="stage(data)" :severity="statusSeverity(data.tax.state === 'Cerrado' ? 'Cerrado' : data.pbc === 'Incidencia' ? 'Incidencia' : stage(data))" /></template></Column>
-    <Column v-if="!compact" header="RESPONSABLE" field="owner" sortable />
-    <Column v-if="!compact" header="HONORARIOS"><template #body="{ data }">{{ money(data.fee) }}</template></Column>
+    <Column v-if="!compact" header="RESPONSABLE" field="owner" sortable><template #body="{ data }"><FieldHistoryMenu :case-id="data.id" field-name="owner" field-label="Responsable">{{ data.owner }}</FieldHistoryMenu></template></Column>
+    <Column v-if="!compact" header="HONORARIOS"><template #body="{ data }"><FieldHistoryMenu :case-id="data.id" field-name="fee" field-label="Honorarios">{{ money(data.fee) }}</FieldHistoryMenu></template></Column>
     <Column header="SIGUIENTE PASO"><template #body="{ data }"><span class="next-step">{{ nextTask(data, today) }}</span></template></Column>
-    <Column header=""><template #body="{ data }"><NuxtLink :to="`/expedientes/${data.id}`" class="open-case" :aria-label="`Abrir expediente de ${data.name}`"><i class="pi pi-arrow-up-right" aria-hidden="true" /></NuxtLink></template></Column>
+    <Column header="Acciones"><template #body="{ data }"><CaseRecordActions v-if="!compact" :case-id="data.id" :name="data.name" /><NuxtLink :to="`/expedientes/${data.id}`" class="open-case" :aria-label="`Abrir expediente de ${data.name}`"><i class="pi pi-arrow-up-right" aria-hidden="true" /></NuxtLink></template></Column>
   </DataTable>
 </template>

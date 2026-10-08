@@ -18,7 +18,7 @@ export function portalFileVisible(file: PrototypeFileDescriptor, state: StoredPr
 export async function describePrototypeFiles(state: StoredPrototypeState, username: string, scope?: PrototypePortalScope) {
   const items = scope ? [portalCase(state, scope)] : state.cases
   const rows = await prisma.prototypeFile.findMany({ where: { datasetId: state.datasetId,
-    ...(scope ? { caseId: scope.caseId } : {}) }, orderBy: { createdAt: 'asc' } })
+    caseId: { in: items.map(item => item.id) } }, orderBy: { createdAt: 'asc' } })
   const files: PrototypeFileDescriptor[] = await Promise.all(rows.map(async row => {
     const available = await storedFileAvailable(row)
     return { ...publicFileDescriptor(row), available, ...(!available ? { availabilityError: 'FILE_UNAVAILABLE' as const } : {}) }

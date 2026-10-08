@@ -82,7 +82,7 @@ test('P08-CA02 campos vacíos rechazados y x/!/texto aceptados', async ({ page, 
   const response = await context.request.get('/api/auth/session')
   expect(response.headers()['cache-control']).toBe('no-store')
   const dto = await response.json()
-  expect(dto).toEqual({ authenticated: true, user: { username: 'x' }, expiresAt: expect.any(String) })
+  expect(dto).toEqual({ authenticated: true, user: { username: 'x', accessRole: 'Empleado' }, expiresAt: expect.any(String) })
   expect(new Date(dto.expiresAt).toISOString()).toBe(dto.expiresAt)
 })
 

@@ -9,6 +9,7 @@ import { confirmedPrototypeCommand as command, loginPrototypeAPI, prototypeState
 import type { PrototypeSnapshot, PrototypeCommandResult } from '../../shared/types/prototype'
 import type { PrototypeFileDescriptor } from '../../shared/types/prototype-files'
 import { reconcileStoredFiles } from '../../server/utils/prototype-file-storage'
+import { withPrototypeHistoryAccess } from '../../server/utils/prototype-history-access'
 
 const pdf = Buffer.from('%PDF-1.4\nLOCAL DEMO ONLY\n\u0000bytes ñ\n%%EOF\n')
 const hash = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex')
@@ -461,7 +462,14 @@ test('P10-CA12 complete R07 real replacement/review and initial 720 both DNI bef
 
 test('P10-CA13 empty isolated installation boots 18 scenarios and real upload/download with documented scripts', async ({ request, page, prototypeServer }) => {
   const db = prototypeTestPrisma()
-  try { await db.$transaction([db.prototypeFile.deleteMany(), db.prototypeState.deleteMany(), db.prototypeInstallation.deleteMany()]) }
+  try {
+    await db.$transaction(tx => withPrototypeHistoryAccess(tx, 'Administrador IT', async () => {
+      await tx.prototypeChangeHistory.deleteMany()
+      await tx.prototypeFile.deleteMany()
+      await tx.prototypeState.deleteMany()
+      await tx.prototypeInstallation.deleteMany()
+    }))
+  }
   finally { await db.$disconnect() }
   await prototypeServer.restart()
   await loginPrototypeAPI(request, origin)

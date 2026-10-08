@@ -3,10 +3,13 @@ import { createSeed } from '../../app/data/seed'
 import type { PrototypePayload, PrototypeSnapshot } from '../../shared/types/prototype'
 import { decodePrototypePayload, encodePrototypePayload } from '../utils/prototype-codec'
 import { prisma } from '../utils/prisma'
+import { withPrototypeHistoryAccess } from '../utils/prototype-history-access'
 import { prototypeDatabase, prototypeFailure } from '../utils/prototype-errors'
 import type { PrototypeSessionContext } from '../utils/prototype-auth'
 import { projectPrototypePortal, type PrototypePortalScope } from './prototype-portal'
 import { describePrototypeFiles } from './prototype-file-descriptors'
+import { recordPrototypeChanges } from './prototype-history'
+import type { Role } from '../../app/types/domain'
 
 export interface StoredPrototypeState extends PrototypePayload {
   schemaVersion: 1
@@ -29,7 +32,7 @@ async function load(tx: Prisma.TransactionClient): Promise<StoredPrototypeState 
   const installation = await tx.prototypeInstallation.findUnique({ where: { id: 1 } })
   const row = await tx.prototypeState.findUnique({ where: { id: 1 } })
   if (!installation && !row) {
-    if (await tx.prototypeFile.count()) prototypeFailure(500, 'STATE_INVALID', 'Archivos sin instalación. No se ha reinicializado la demo.')
+    if (await tx.prototypeFile.count() || await withPrototypeHistoryAccess(tx, 'Administrador IT', () => tx.prototypeChangeHistory.count())) prototypeFailure(500, 'STATE_INVALID', 'Datos sin instalación. No se ha reinicializado la demo.')
     return null
   }
   if (!installation || !row || installation.schemaVersion !== 1) {
@@ -88,11 +91,13 @@ export interface PrototypeMutation<T> {
   changed: boolean
   result: T
   artifacts?: PrototypeArtifacts
+  restoredHistoryId?: string
 }
 export async function mutatePrototype<T>(options: {
   session: PrototypeSessionContext
   datasetId: string
   expectedRevision: number
+  actorRole?: Role
   apply(state: StoredPrototypeState, tx: Prisma.TransactionClient): Promise<PrototypeMutation<T>> | PrototypeMutation<T>
 }): Promise<{ state: StoredPrototypeState; result: T; cleanupPending?: boolean }> {
   return prototypeDatabase(async () => {
@@ -106,6 +111,7 @@ export async function mutatePrototype<T>(options: {
         if (state.datasetId !== options.datasetId || state.revision !== options.expectedRevision) {
           prototypeFailure(409, 'REVISION_CONFLICT', 'Otro cambio se ha confirmado. Actualiza y confirma de nuevo; no se ha repetido la acción.')
         }
+        const before = structuredClone(state)
         const mutation = await options.apply(state, tx)
         artifacts = mutation.artifacts
         if (!mutation.changed) return { state, result: mutation.result }
@@ -118,6 +124,8 @@ export async function mutatePrototype<T>(options: {
           data: { payload: serialized, schemaVersion, datasetId, revision: { increment: 1 } },
         })
         if (updated.count !== 1) prototypeFailure(409, 'REVISION_CONFLICT', 'Otro cambio se ha confirmado. Actualiza y confirma de nuevo; no se ha repetido la acción.')
+        await recordPrototypeChanges(tx, before, state, options.session.username,
+          options.actorRole ?? prototypeRole(before, options.session.username), !!mutation.restoredHistoryId)
         state.revision++
         return { state, result: mutation.result }
       }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, timeout: 20_000 })

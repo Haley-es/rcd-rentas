@@ -25,7 +25,8 @@ export default defineNuxtConfig({
     },
   },
   runtimeConfig: {
-    prototypeAuth: { e2e: false, challengeTtlMs: 300_000, sessionTtlMs: 28_800_000 },
+    prototypeAuth: { e2e: false, challengeTtlMs: 300_000, sessionTtlMs: 28_800_000,
+      adminUsername: '', adminPasswordHash: '', employeeUsername: '', employeePasswordHash: '' },
   },
   modules: ['@primevue/nuxt-module'],
   css: ['primeicons/primeicons.css', '~/assets/css/main.css'],

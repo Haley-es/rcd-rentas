@@ -7,7 +7,7 @@ export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: false,
   workers: 1,
-  testIgnore: ['prototype-09-persistence.spec.ts', 'prototype-10-files.spec.ts'],
+  testIgnore: ['prototype-09-persistence.spec.ts', 'prototype-10-files.spec.ts', 'prototype-history.spec.ts', 'prototype-access-roles.spec.ts'],
   reporter: 'list',
   use: {
     baseURL: 'http://127.0.0.1:3011',

@@ -38,7 +38,7 @@ const role = enumeration(roles)
 const asset = object({ id, category: text, country: text, entity: text, value: number(0), origin: optional(text), observation: optional(text) })
 const document = object({ id, kind: enumeration(documentKinds), name: id, version: positive,
   state: enumeration(['Pendiente', 'Enviado', 'Válido', 'Sustituir']), note: text, size: number(1, 10_000_000, true) })
-const caseFile = object({
+export const caseFile = object({
   id, name: id, email: id, campaign: enumeration(['Renta', '720']), segment: text, owner: text, scenario: text,
   opened: bool, contact: enumeration(['Sin respuesta', 'Recordatorio', 'Llamada pendiente', 'Aceptado', 'No interesado', 'Retirado']),
   contactedAt: date, reminderAt: nullable(date), rentaType: enumeration(['Individual', 'Conjunta']),
@@ -121,6 +121,8 @@ const commands: Record<CommandEnvelope['command']['type'], Shape> = {
   'set-role': { role }, 'advance-days': { days: number(1, 365_000, true) },
   'set-settings': { teams: optional(bool), signatureEmail: optional(bool), documentReminderDays: optional(number(1, 30, true)) },
   'invite-many': { caseIds: array(id) }, 'evaluate-followups': {}, 'reset-demo': { confirm: enumeration([true]) },
+  'delete-case': { caseId: id, confirm: enumeration([true]) },
+  'restore-case': { historyId: (v, p) => uuid(v, p), confirm: enumeration([true]) },
 }
 const uuid: Validator = (v, p) => { if (typeof v !== 'string' || !/^[\da-f]{8}(-[\da-f]{4}){3}-[\da-f]{12}$/i.test(v)) invalid(p) }
 export function assertCommandEnvelope(v: unknown): asserts v is CommandEnvelope {

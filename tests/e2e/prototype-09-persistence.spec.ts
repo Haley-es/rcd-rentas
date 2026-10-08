@@ -8,6 +8,7 @@ import type { Role, WorkflowAction } from '../../app/types/domain'
 import { workflowFields } from '../../shared/utils/prototype-validation'
 import { runAction } from '../../app/utils/workflow'
 import { decodePrototypePayload, encodePrototypePayload } from '../../server/utils/prototype-codec'
+import { withPrototypeHistoryAccess } from '../../server/utils/prototype-history-access'
 
 async function readUIState(page: Page): Promise<PrototypeSnapshot> {
   await expect(page.locator('[data-app-ready="true"]')).toBeVisible()
@@ -20,7 +21,12 @@ async function reset(request: APIRequestContext) {
 test('P09-CA01 concurrent first bootstrap is durable, unique and idempotent', async ({ request }) => {
   const db = prototypeTestPrisma()
   try {
-    await db.$transaction([db.prototypeFile.deleteMany(), db.prototypeState.deleteMany(), db.prototypeInstallation.deleteMany()])
+    await db.$transaction(tx => withPrototypeHistoryAccess(tx, 'Administrador IT', async () => {
+      await tx.prototypeChangeHistory.deleteMany()
+      await tx.prototypeFile.deleteMany()
+      await tx.prototypeState.deleteMany()
+      await tx.prototypeInstallation.deleteMany()
+    }))
     await loginPrototypeAPI(request, origin)
     const [first, second] = await Promise.all([prototypeState(request), prototypeState(request)])
     expect(first).toEqual(second)

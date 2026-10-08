@@ -14,7 +14,7 @@ async function submit() {
 
 <template>
   <h1>Iniciar sesión</h1>
-  <p>Primer paso simulado. Usuario y contraseña: cualquier valor no vacío es válido.</p>
+  <p>Las cuentas configuradas requieren su contraseña. Los demás usuarios acceden como empleados de demostración con valores no vacíos.</p>
   <form class="access-form" novalidate @submit.prevent="submit">
     <label for="username">Usuario</label>
     <InputText id="username" v-model="username" autocomplete="off" />

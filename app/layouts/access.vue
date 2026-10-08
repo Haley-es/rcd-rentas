@@ -2,8 +2,8 @@
   <main class="access-layout">
     <section class="access-card" aria-label="Acceso al prototipo local">
       <p class="eyebrow">RCD · PROTOTIPO LOCAL</p>
-      <p class="access-warning">No producción. Acceso ficticio: cualquier usuario no acredita identidad ni autorización real. No introduzcas contraseñas ni códigos reales.</p>
-      <p>MFA simulado: cualquier valor no vacío es válido.</p>
+      <p class="access-warning">No producción. La identidad de los empleados es simulada. Administrador IT requiere su credencial local. No introduzcas contraseñas ni códigos corporativos.</p>
+      <p>MFA simulado: cualquier valor no vacío es válido en localhost, 127.0.0.1 o ::1. Fuera del entorno local está deshabilitado.</p>
       <slot />
     </section>
   </main>
