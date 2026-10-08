@@ -27,7 +27,7 @@
   // El escenario se escala con transform: Chart.js mediría el tamaño transformado, así que se fija el
   // tamaño de maquetación y se desactivan los eventos de puntero (sus coordenadas no contemplan la escala).
   function make(id, config) {
-    if (charts[id]) charts[id].destroy()
+    destroy([id])
     const canvas = document.getElementById(id)
     const box = canvas.parentElement
     canvas.style.width = `${box.clientWidth}px`
@@ -39,7 +39,11 @@
 
   function destroy(ids) {
     for (const id of ids) {
-      if (charts[id]) { charts[id].destroy(); delete charts[id] }
+      if (charts[id]) {
+        gsap.killTweensOf(charts[id])
+        charts[id].destroy()
+        delete charts[id]
+      }
     }
   }
 
@@ -52,7 +56,7 @@
         labels: phases,
         datasets: [
           { label: 'Hoy', data: [9, 5, 6, 5, 4, 4], backgroundColor: C.sand, borderRadius: 8, borderSkipped: false, barPercentage: 0.75, categoryPercentage: 0.7 },
-          { label: 'Con la plataforma', data: [1, 2, 3, 1, 2, 2], backgroundColor: C.forest, borderRadius: 8, borderSkipped: false, barPercentage: 0.75, categoryPercentage: 0.7 },
+          { label: 'Escenario propuesto', data: [1, 2, 3, 1, 2, 2], backgroundColor: C.forest, borderRadius: 8, borderSkipped: false, barPercentage: 0.75, categoryPercentage: 0.7 },
         ],
       },
       options: {
@@ -85,7 +89,7 @@
         labels: ['Eficiencia', 'Trazabilidad', 'Experiencia cliente', 'Escalabilidad', 'Seguimiento', 'Visibilidad'],
         datasets: [
           { label: 'Hoy', data: [2, 1, 2, 1.5, 2, 1], borderColor: C.sand, backgroundColor: 'rgba(217, 205, 179, 0.35)', pointBackgroundColor: C.sand, borderWidth: 2 },
-          { label: 'Con la plataforma', data: [4.5, 5, 4.5, 4, 5, 5], borderColor: C.forest, backgroundColor: 'rgba(169, 207, 90, 0.35)', pointBackgroundColor: C.forest, borderWidth: 2 },
+          { label: 'Escenario propuesto', data: [4.5, 5, 4.5, 4, 5, 5], borderColor: C.forest, backgroundColor: 'rgba(169, 207, 90, 0.35)', pointBackgroundColor: C.forest, borderWidth: 2 },
         ],
       },
       options: {
@@ -125,7 +129,7 @@
 
   function plan() {
     const blocks = [
-      ['Kick-off y diseño detallado', 0, 2, C.lav],
+      ['Arranque y diseño detallado', 0, 2, C.lav],
       ['Identidad, accesos y entornos', 1, 4, C.forest2],
       ['Comunicación y captación', 2, 6, C.forest],
       ['Gestión de expedientes', 4, 11, C.forest],
@@ -148,8 +152,8 @@
           legend: { display: false },
           tooltip: { callbacks: { label: (ctx) => `Semanas ${ctx.raw[0] + 1}–${ctx.raw[1]}` } },
           milestones: { items: [
-            { at: 0, label: 'Prototipo ✓', color: C.lime2, align: 'left', dx: -2 },
-            { at: 15, label: 'En producción', color: C.forest, align: 'right', dx: 2 },
+            { at: 0, label: 'Arranque aprobado', color: C.lime2, align: 'left', dx: -2 },
+            { at: 15, label: 'Objetivo orientativo', color: C.forest, align: 'right', dx: 2 },
           ] },
         },
         scales: {

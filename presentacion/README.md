@@ -1,79 +1,67 @@
-﻿# Presentación comercial · Renta y Modelo 720
+# Propuesta de proyecto a medida · Renta y Modelo 720
 
-Web estática e independiente para presentar la propuesta a RCD. No necesita servidor, build ni conexión: abre [index.html](index.html) en el navegador (Chrome o Edge recomendados) y pulsa `F` para pantalla completa.
+Web estática e independiente para proponer a RCD la preparación de una petición de proyecto a medida. El Mockup sirve como base para concretar necesidades, alcance y reglas de negocio; la evaluación de la petición deberá determinar la viabilidad, el presupuesto, los recursos y el calendario.
+
+No necesita servidor, build ni conexión: abre [index.html](index.html) en el navegador y pulsa `F` para pantalla completa.
 
 ## Contenido
 
-1. Portada con capturas del prototipo en 3D.
+1. Portada con capturas del Mockup y la propuesta de preparar una petición de proyecto.
 2. Punto de partida: retos detectados en las campañas actuales.
-3. La solución: comunicación, gestión de expedientes y portal del cliente alrededor de un expediente único.
-4. **Demo del ciclo completo** (18 pasos, unos 2:30 min): acceso, lanzamiento de campaña, respuesta del cliente, propuesta de honorarios, validaciones y PBC, documentación, borrador de Renta, extractor 720 y Criteria, presentación, factura, cierre y seguimiento.
-5. Reglas de negocio: qué se automatiza y qué decide una persona.
-6. Impacto esperado con gráficos (Chart.js).
-7. Hoja de ruta de 13–15 semanas (diagrama de Gantt).
-8. Siguiente paso y aceptación de la propuesta.
+3. Alcance propuesto: comunicación, gestión de expedientes y portal del cliente.
+4. Reglas de negocio que deben validarse con los equipos de RCD.
+5. Beneficios a evaluar mediante un escenario ilustrativo y gráficos.
+6. Plan orientativo de desarrollo, sujeto a la evaluación y aprobación de la petición.
+7. Siguiente paso: revisar el Mockup, definir la petición y presentarla para evaluación.
+
+El botón «Preparar la petición de proyecto» muestra qué información deberá incluirse. No registra ni envía ninguna petición.
 
 ## Controles
 
 | Acción | Teclado / ratón |
 | --- | --- |
 | Diapositiva siguiente / anterior | `→` / `←`, rueda, deslizar o menú superior |
-| Pausa / reanudar la demo | `Espacio` o botón central |
-| Volver a empezar la demo | `R`, botón de reinicio o «Volver a empezar» al final |
-| Paso anterior / siguiente de la demo | `←` / `→` o botones laterales |
-| Saltar a un punto o fase | barra de progreso o lista «Recorrido» |
-| Velocidad | botón `1×` (1×, 1,5×, 2×, 0,75×) |
+| Diapositiva siguiente | `Espacio` / `PageDown` |
+| Diapositiva anterior | `PageUp` |
+| Primera / última diapositiva | `Home` / `End` |
 | Pantalla completa | `F` |
-| Efectos de sonido (activados por defecto) | `S` o botón del altavoz arriba a la derecha |
+| Efectos de sonido (activados por defecto) | `S` o botón del altavoz |
 | Música de fondo (desactivada por defecto) | `M` o botón de la nota musical |
 
-Se puede abrir directamente una sección con el ancla, por ejemplo `index.html#demo`.
+Se puede abrir directamente una sección con el ancla, por ejemplo `index.html#solucion`.
 
 ## Sonido
 
-La web reproduce los mismos efectos que el vídeo (clics, tecleo, avisos, sellos, cambios de vista, gráficos, celebración…) y, si se activa, el mismo fondo musical en bucle.
+Los efectos de las animaciones y la música opcional se sintetizan en el navegador. No se reproduce ningún archivo de vídeo.
 
-- Los navegadores no permiten audio hasta la primera interacción: el sonido empieza tras el primer clic o tecla.
-- Las preferencias de efectos y música se guardan en el navegador (`localStorage`).
-- Los sonidos se sintetizan en un Web Worker y se pre-generan al iniciar el audio, así que no frenan las animaciones. Los saltos con la barra de la demo no disparan sonidos.
+- El audio empieza tras la primera interacción, según las restricciones del navegador.
+- Las preferencias de efectos y música se guardan en `localStorage`.
+- Los sonidos se generan en un Web Worker para no frenar las animaciones.
 
 ## Estructura
 
-- [index.html](index.html) y [estilos.css](estilos.css): diapositivas y diseño a 1600×900, escalado a cualquier pantalla.
-- [js/presentacion.js](js/presentacion.js): navegación y animaciones de entrada.
-- [js/demo.js](js/demo.js): guion de la demo sobre una línea de tiempo GSAP (pausa, salto y reinicio).
-- [js/graficos.js](js/graficos.js): gráficos de impacto y plan.
+- [index.html](index.html) y [estilos.css](estilos.css): siete diapositivas y diseño a 1600×900, escalado a la pantalla.
+- [js/presentacion.js](js/presentacion.js): navegación, animaciones y contenido de la petición.
+- [js/graficos.js](js/graficos.js): escenarios ilustrativos y plan orientativo.
 - [js/fondo.js](js/fondo.js): fondo animado.
-- [js/sintetizador.js](js/sintetizador.js): síntesis de efectos y música, compartida por la web y el vídeo.
-- [js/sonido.js](js/sonido.js): reproducción en la web (Web Audio), botones de efectos y música, y eventos `sfx` para el grabador.
-- [video](video): grabador del vídeo y sintetizador de audio.
-- [capturas](capturas): pantallas reales del prototipo y `puntos.js` con la posición de cada elemento que señala el cursor.
-- [vendor](vendor): GSAP 3.13 y Chart.js 4.5 locales, para funcionar sin conexión.
+- [js/sintetizador.js](js/sintetizador.js) y [js/sonido.js](js/sonido.js): síntesis y reproducción de audio.
+- [capturas](capturas): pantallas del Mockup.
+- [vendor](vendor): GSAP y Chart.js locales para funcionar sin conexión.
 
 ## Regenerar las capturas
 
-Con el prototipo arrancado en `http://127.0.0.1:3010` (`pnpm dev`) y los datos de demostración sin modificar:
+Con el Mockup arrancado en `http://127.0.0.1:3010` (`pnpm dev`) y los datos de demostración sin modificar:
 
 ```powershell
 node presentacion\capturar.mjs
 ```
 
-El script inicia sesión con valores ficticios, recorre las pantallas sin cambiar datos, guarda las imágenes y regenera `capturas/puntos.js`. Para otra URL usa la variable `PRESENTACION_BASE_URL`.
+El script recorre las pantallas, guarda las imágenes y regenera `capturas/puntos.js`. Para otra URL usa `PRESENTACION_BASE_URL`.
 
-Los datos, importes y cifras de impacto son ilustrativos y deben validarse con RCD.
+Los datos, importes y cifras de impacto son ilustrativos y deben validarse con RCD. La referencia de 13–15 semanas describe un posible desarrollo desde un arranque aprobado; la petición debe concretar alcance, recursos e integraciones antes de fijar plazos.
 
-## Vídeo con efectos de sonido
+## Vídeos conservados
 
-[video/grabar.mjs](video/grabar.mjs) graba la presentación completa en dos versiones: `video/propuesta-rcd.mp4` (efectos y música de fondo) y `video/propuesta-rcd-onlyfx.mp4` (solo efectos, sin música). Ambas en 1920×1080, 30 fps, H.264 + AAC, unos 3:40 minutos): portada, contexto, demo entera, reglas, impacto, hoja de ruta y aceptación con confeti.
+Los archivos `video/propuesta-rcd.mp4` y `video/propuesta-rcd-onlyfx.mp4` se conservan en la carpeta [video](video) como material de la versión anterior. No aparecen ni se cargan en la presentación web y no se han regenerado con el nuevo discurso.
 
-```powershell
-# Requiere ffmpeg con libx264 en el PATH, o su ruta en FFMPEG_PATH.
-node presentacion\video\grabar.mjs
-```
-
-- La página corre con el reloj simulado de Playwright: el tiempo avanza exactamente 1/30 s por fotograma, así que el vídeo sale fluido aunque la captura sea lenta (unos 35–40 minutos de grabación).
-- La presentación emite eventos `sfx` ([js/sonido.js](js/sonido.js)) en cada clic, tecleo, sello, aviso, zoom, cambio de vista o diapositiva, gráfico y celebración. El grabador guarda su instante exacto.
-- [video/sonido.mjs](video/sonido.mjs) usa el mismo sintetizador que la web ([js/sintetizador.js](js/sintetizador.js)) para generar todos los efectos y un fondo musical ambiental con reverberación y atenuación automática bajo los efectos. No usa muestras externas, así que no hay derechos de terceros.
-- Variables opcionales: `VIDEO_OUT` (ruta de la versión con música; la de solo efectos se nombra igual con `-onlyfx`), `VIDEO_FPS`, `VIDEO_KEEP_TMP=1` para conservar vídeo mudo, WAV y eventos en `video/.tmp`, y `VIDEO_REUTILIZAR=1` para regenerar solo el audio de ambas versiones a partir del `propuesta-rcd.mp4` existente (unos 3 minutos, sin capturar fotogramas).
-- Los MP4 están excluidos de Git en [video/.gitignore](video/.gitignore).
-- Durante la grabación la web no reproduce audio: el grabador sintetiza la pista completa aparte.
+También se mantienen el guion animado [js/demo.js](js/demo.js), `capturas/puntos.js` y los scripts de grabación y sonido en `video/`. El grabador conserva el recorrido y el cierre de la versión anterior; requiere adaptar su guion antes de grabar la presentación actual. Los MP4 siguen excluidos de Git en [video/.gitignore](video/.gitignore).

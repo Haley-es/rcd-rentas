@@ -167,10 +167,6 @@
       })
     },
 
-    demo() {
-      window.Demo.enter()
-    },
-
     reglas(slide, tl) {
       const path = slide.querySelector('.flow-line path')
       const len = path.getTotalLength()
@@ -199,12 +195,11 @@
     siguiente(slide, tl) {
       tl.fromTo(slide.querySelectorAll('.nstep span'), { scale: 0, rotation: -90 }, { scale: 1, rotation: 0, duration: 0.7, ease: 'back.out(2.5)', stagger: 0.12 }, 1.1)
       sfxEach(tl, 'pop', 1.15, 3, 0.12)
-      ambient.push(gsap.to('#btnAccept', { boxShadow: '0 0 0 12px rgba(198, 226, 127, 0.45), 0 14px 30px -14px rgba(38, 76, 60, .9)', duration: 1.1, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: 2 }))
+      ambient.push(gsap.to('#btnRequest', { boxShadow: '0 0 0 12px rgba(198, 226, 127, 0.45), 0 14px 30px -14px rgba(38, 76, 60, .9)', duration: 1.1, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: 2 }))
     },
   }
 
   const leaveHooks = {
-    demo: () => window.Demo.leave(),
     impacto: () => window.Graficos.destroy(['chartSteps', 'chartSplit', 'chartGoals']),
     plan: () => window.Graficos.destroy(['chartGantt']),
   }
@@ -250,19 +245,17 @@
     gsap.to('#deckProgress', { width: `${((index + 1) / slides.length) * 100}%`, duration: 0.8, ease: 'power3.out' })
   }
 
-  const isDemo = () => slides[index] && slides[index].dataset.id === 'demo'
   const nextSlide = () => go(index + 1)
   const prevSlide = () => go(index - 1)
 
   document.addEventListener('keydown', (e) => {
     if (e.altKey || e.ctrlKey || e.metaKey) return
     const k = e.key
-    if (k === 'ArrowRight' || k === 'ArrowDown') { e.preventDefault(); if (!(isDemo() && window.Demo.next())) nextSlide() }
-    else if (k === 'ArrowLeft' || k === 'ArrowUp') { e.preventDefault(); if (!(isDemo() && window.Demo.prev())) prevSlide() }
+    if (k === 'ArrowRight' || k === 'ArrowDown') { e.preventDefault(); nextSlide() }
+    else if (k === 'ArrowLeft' || k === 'ArrowUp') { e.preventDefault(); prevSlide() }
     else if (k === 'PageDown') { e.preventDefault(); nextSlide() }
     else if (k === 'PageUp') { e.preventDefault(); prevSlide() }
-    else if (k === ' ') { e.preventDefault(); if (isDemo()) window.Demo.toggle(); else nextSlide() }
-    else if (k === 'r' || k === 'R') { if (isDemo()) window.Demo.restart() }
+    else if (k === ' ') { e.preventDefault(); nextSlide() }
     else if (k === 'f' || k === 'F') toggleFullscreen()
     else if (k === 'Home') go(0)
     else if (k === 'End') go(slides.length - 1)
@@ -270,7 +263,7 @@
 
   let wheelLock = 0
   window.addEventListener('wheel', (e) => {
-    if (isDemo() || Math.abs(e.deltaY) < 30) return
+    if (Math.abs(e.deltaY) < 30) return
     const now = Date.now()
     if (now - wheelLock < 1100) return
     wheelLock = now
@@ -298,61 +291,14 @@
   }
   document.getElementById('btnFullscreen').addEventListener('click', toggleFullscreen)
 
-  // Celebración al aceptar la propuesta.
-  function confetti() {
-    const canvas = document.getElementById('confetti')
-    const ctx = canvas.getContext('2d')
-    const ratio = window.Graficos.ratio()
-    const w = canvas.clientWidth
-    const h = canvas.clientHeight
-    canvas.width = w * ratio
-    canvas.height = h * ratio
-    ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
-    const colors = ['#c6e27f', '#264c3c', '#a9cf5a', '#9c8fd0', '#f6c96b', '#ffffff']
-    const parts = Array.from({ length: 220 }, (_, i) => ({
-      x: w / 2 + (Math.random() - 0.5) * 200,
-      y: h * 0.72,
-      vx: (Math.random() - 0.5) * 16,
-      vy: -Math.random() * 18 - 8,
-      r: Math.random() * 6 + 4,
-      a: Math.random() * Math.PI,
-      va: (Math.random() - 0.5) * 0.3,
-      c: colors[i % colors.length],
-    }))
-    const t0 = performance.now()
-    const tick = (now) => {
-      ctx.clearRect(0, 0, w, h)
-      const life = (now - t0) / 1000
-      for (const p of parts) {
-        p.vy += 0.42
-        p.vx *= 0.99
-        p.x += p.vx
-        p.y += p.vy
-        p.a += p.va
-        ctx.save()
-        ctx.globalAlpha = Math.max(0, 1 - life / 4.5)
-        ctx.translate(p.x, p.y)
-        ctx.rotate(p.a)
-        ctx.fillStyle = p.c
-        ctx.fillRect(-p.r / 2, -p.r / 4, p.r, p.r / 2)
-        ctx.restore()
-      }
-      if (life < 4.5) requestAnimationFrame(tick)
-      else ctx.clearRect(0, 0, w, h)
-    }
-    requestAnimationFrame(tick)
-  }
-
-  document.getElementById('btnAccept').addEventListener('click', (e) => {
+  // Muestra el contenido a preparar; la presentación no registra ni envía una petición.
+  document.getElementById('btnRequest').addEventListener('click', (e) => {
     const btn = e.currentTarget
-    confetti()
     window.sfx('click')
-    window.sfx('confetti')
-    btn.innerHTML = '<svg><use href="#i-check-circle"/></svg> Propuesta aceptada'
-    gsap.fromTo(btn, { scale: 0.92 }, { scale: 1, duration: 0.6, ease: 'elastic.out(1, 0.4)' })
-    const thanks = document.getElementById('thanks')
-    thanks.textContent = '¡Gracias por vuestra confianza! Preparamos el kick-off con vuestros equipos.'
-    gsap.fromTo(thanks, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.6, ease: 'power3.out' })
+    btn.setAttribute('aria-expanded', 'true')
+    const details = document.getElementById('requestDetails')
+    details.textContent = 'La petición incluirá objetivos, alcance, integraciones, responsables y criterios de éxito. Su evaluación concretará viabilidad, presupuesto y calendario.'
+    gsap.fromTo(details, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.6, ease: 'power3.out' })
   })
 
   const start = slides.findIndex((s) => `#${s.dataset.id}` === location.hash)
