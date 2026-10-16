@@ -32,7 +32,7 @@ async function confirmReset() { const result = await reset(); resetFeedback.valu
 <template>
   <div v-if="portal" class="portal-layout">
     <div class="demo-ribbon">DEMO INTERACTIVA · No producción · Datos ficticios · MFA simulado</div>
-    <div class="prototype-access"><span>Usuario demo: {{ username }} · Identidad no verificada</span><Button label="Cerrar sesión" severity="secondary" :disabled="pending" @click="logout" /></div>
+    <div class="prototype-access"><img class="rcd-logo" src="/brand/rcd-logo.png" alt="RCD" width="190" height="190" /><span>Usuario demo: {{ username }} · Identidad no verificada</span><Button label="Cerrar sesión" severity="secondary" :disabled="pending" @click="logout" /></div>
     <Message v-if="error && !stateError" severity="error" role="alert">{{ error }}</Message>
     <Message v-if="stateError" severity="error" role="alert">{{ stateError }}</Message>
     <Button v-if="stateError" label="Reintentar sincronización" :disabled="mutationPending" @click="refresh()" />
@@ -41,7 +41,7 @@ async function confirmReset() { const result = await reset(); resetFeedback.valu
   <div v-else class="app-layout">
     <a href="#main" class="skip-link">Saltar al contenido</a>
     <aside class="sidebar" :class="{ 'is-open': mobileMenu }">
-      <NuxtLink to="/" class="brand"><span class="brand-symbol">r.</span><span>RCD<span class="brand-sub">LEGAL · TAX</span></span></NuxtLink>
+      <NuxtLink to="/" class="brand" aria-label="RCD, vista general"><img class="rcd-logo" src="/brand/rcd-logo.png" alt="RCD" width="190" height="190" /></NuxtLink>
       <div class="workspace"><span class="workspace-mark">CF</span><div>Campañas fiscales<small>Espacio de trabajo</small></div><i class="pi pi-angle-down" aria-hidden="true" /></div>
       <p class="nav-caption">GESTIÓN DE CAMPAÑAS</p>
       <nav aria-label="Navegación principal">

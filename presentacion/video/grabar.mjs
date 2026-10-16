@@ -8,15 +8,25 @@
 import { chromium } from '@playwright/test'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
-import { mkdir, writeFile, rm, rename } from 'node:fs/promises'
+import { mkdir, mkdtemp, writeFile, rm, rename } from 'node:fs/promises'
+import { resolve, relative, isAbsolute, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { renderAudio } from './sonido.mjs'
 
 const FPS = Number(process.env.VIDEO_FPS || 30)
+if (!Number.isInteger(FPS) || FPS < 1 || FPS > 60) throw new Error('VIDEO_FPS debe ser un entero entre 1 y 60.')
+const validateOnly = process.env.VIDEO_VALIDATE_ONLY === '1'
 const W = 1920
 const H = 1080
 const here = fileURLToPath(new URL('.', import.meta.url))
-const tmp = `${here}.tmp\\`
+const tmpRoot = resolve(here, '.tmp')
+await mkdir(tmpRoot, { recursive: true })
+const tmp = (await mkdtemp(`${tmpRoot}${sep}grabar-`)) + sep
+async function cleanup() {
+  const child = relative(tmpRoot, resolve(tmp))
+  if (!child || child.startsWith('..') || isAbsolute(child)) throw new Error('Directorio temporal fuera de video/.tmp.')
+  await rm(tmp, { recursive: true, force: true })
+}
 const out = process.env.VIDEO_OUT || `${here}propuesta-rcd.mp4`
 const outFx = out.replace(/\.mp4$/i, '-onlyfx.mp4')
 // Con VIDEO_REUTILIZAR=1 no se capturan fotogramas: se recalculan los eventos de sonido con el mismo
@@ -35,13 +45,11 @@ function run(args) {
   })
 }
 
-await rm(tmp, { recursive: true, force: true })
-await mkdir(tmp, { recursive: true })
 
 const browser = await chromium.launch()
 const context = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1, locale: 'es-ES' })
 const page = await context.newPage()
-const start = new Date('2026-10-01T10:00:00Z')
+const start = new Date('2026-10-16T10:00:00Z')
 await page.clock.install({ time: start })
 await page.clock.pauseAt(new Date(start.getTime() + 1000))
 await page.addInitScript(() => {
@@ -49,7 +57,8 @@ await page.addInitScript(() => {
   window.__sfxLog = []
   window.addEventListener('sfx', (e) => window.__sfxLog.push({ ...e.detail, t: performance.now() }))
 })
-page.on('pageerror', (e) => console.error('Error en la página:', e.message))
+const pageErrors = []
+page.on('pageerror', (e) => { pageErrors.push(e.message); console.error('Error en la página:', e.message) })
 await page.goto(deck)
 await new Promise((r) => setTimeout(r, 1500))
 
@@ -57,10 +66,11 @@ await new Promise((r) => setTimeout(r, 1500))
 await page.evaluate(async () => {
   await document.fonts.ready
   const names = ['login', 'dashboard', 'campanas', 'portal-respuesta', 'portal-formulario', 'expedientes', 'ph-socio', 'portal-firma', 'validaciones-dni', 'validaciones-pbc', 'portal-documentos', 'documentos-revision', 'renta-borrador', 'portal-borrador', 'extractor-720', 'criteria-720', 'cierre', 'tareas']
-  await Promise.all(names.map((n) => { const i = new Image(); i.src = `capturas/${n}.png`; return i.decode().catch(() => {}) }))
+  await Promise.all(names.map((n) => { const i = new Image(); i.src = `capturas/${n}.png`; return i.decode() }))
   const veil = document.createElement('div')
   veil.id = 'videoVeil'
-  veil.style.cssText = 'position:fixed;inset:0;background:#0b1a14;z-index:10000;pointer-events:none'
+  veil.style.cssText = 'position:fixed;inset:0;z-index:10000;pointer-events:none'
+  veil.style.background = getComputedStyle(document.documentElement).getPropertyValue('--rcd-deep').trim()
   document.body.appendChild(veil)
   const cursor = document.createElement('div')
   cursor.id = 'videoCursor'
@@ -81,7 +91,7 @@ await cssRate(110)
 const tmpVideo = `${tmp}video.mp4`
 let ffmpeg = null
 let ffDone = Promise.resolve()
-if (!reuse) {
+if (!reuse && !validateOnly) {
   ffmpeg = spawn(ffmpegPath, ['-y', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-', '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-r', String(FPS), tmpVideo], { stdio: ['pipe', 'ignore', 'pipe'] })
   let ffErr = ''
   ffmpeg.stderr.on('data', (d) => { ffErr = (ffErr + d).slice(-4000) })
@@ -97,7 +107,7 @@ async function step() {
   const target = Math.round(((frame + 1) * 1000) / FPS)
   await page.clock.runFor(target - clockMs)
   clockMs = target
-  if (!reuse) {
+  if (!reuse && !validateOnly) {
     const buf = await page.screenshot({ type: 'jpeg', quality: 92 })
     if (!ffmpeg.stdin.write(buf)) await once(ffmpeg.stdin, 'drain')
   }
@@ -114,24 +124,31 @@ const key = (k) => page.keyboard.press(k)
 // Se envuelve para no devolver objetos GSAP: serializarlos bloquea page.evaluate.
 const animate = (fn) => page.evaluate(`(${fn})(); undefined`)
 
-console.log('Grabando…')
+console.log(validateOnly ? 'Validando el guion…' : 'Grabando…')
 await animate(() => gsap.to('#videoVeil', { opacity: 0, duration: 1.2, ease: 'power2.out' }))
-await hold(7.2) // Portada
-await key('ArrowRight'); await hold(7.6) // Punto de partida
-await key('ArrowRight'); await hold(8.6) // La solución
-await key('ArrowRight') // Demo: se reproduce completa
-for (;;) {
-  await hold(0.5)
-  const done = await page.evaluate(() => getComputedStyle(document.getElementById('demoEnd')).visibility === 'visible')
-  if (done) break
+const chapters = [
+  ['portada', 10], ['reto', 12], ['solucion', 14], ['reglas', 14],
+  ['impacto', 12], ['plan', 12], ['siguiente', 5],
+]
+for (let i = 0; i < chapters.length; i++) {
+  const [id, seconds] = chapters[i]
+  if (i) await key('ArrowRight')
+  await hold(seconds)
+  await page.evaluate((expected) => {
+    const active = document.querySelector('.slide.is-active')
+    if (active?.dataset.id !== expected) throw new Error('Diapositiva inesperada: ' + active?.dataset.id)
+    const logo = document.querySelector('.brand .rcd-logo')
+    if (!logo?.complete || logo.naturalWidth !== 190) throw new Error('Logotipo oficial no disponible.')
+    if ([...document.images].some(image => !image.complete || !image.naturalWidth)) throw new Error('Hay capturas sin cargar.')
+    const charts = Object.values(Chart.instances)
+    if (expected === 'impacto' && charts.length !== 3) throw new Error('Faltan gráficos de impacto.')
+    if (expected === 'plan' && charts.length !== 1) throw new Error('Falta el gráfico del plan.')
+  }, id)
+  if (validateOnly) await page.screenshot({ path: tmp + (i + 1) + '-' + id + '.png' })
+  console.log('  Capítulo ' + (i + 1) + '/' + chapters.length + ': ' + id)
 }
-await hold(3.5)
-await key('ArrowRight'); await hold(8.6) // Reglas
-await key('ArrowRight'); await hold(8.8) // Impacto
-await key('ArrowRight'); await hold(8.6) // Hoja de ruta
-await key('ArrowRight'); await hold(3.4) // Siguiente paso
 await animate(() => {
-  const btn = document.getElementById('btnAccept').getBoundingClientRect()
+  const btn = document.getElementById('btnRequest').getBoundingClientRect()
   const cur = document.getElementById('videoCursor')
   gsap.set(cur, { x: window.innerWidth * 0.72, y: window.innerHeight * 0.9, opacity: 0 })
   gsap.to(cur, { opacity: 1, duration: 0.3 })
@@ -140,14 +157,17 @@ await animate(() => {
 await hold(1.25)
 await animate(() => {
   gsap.to('#videoCursor', { scale: 0.8, duration: 0.1, yoyo: true, repeat: 1 })
-  document.getElementById('btnAccept').click()
+  document.getElementById('btnRequest').click()
 })
 await hold(1)
 await animate(() => gsap.to('#videoCursor', { opacity: 0, duration: 0.4 }))
-await hold(4.6)
+await hold(7.5)
 await animate(() => gsap.to('#videoVeil', { opacity: 1, duration: 1.3, ease: 'power2.in' }))
 await hold(1.6)
 
+const expanded = await page.locator('#btnRequest').getAttribute('aria-expanded')
+if (expanded !== 'true') throw new Error('El cierre no mostró el contenido de la petición.')
+if (pageErrors.length) throw new Error(pageErrors.join('\n'))
 ffmpeg?.stdin.end()
 await ffDone
 const events = (await page.evaluate(() => window.__sfxLog)).map((e) => ({ ...e, t: (e.t - clock0) / 1000 })).filter((e) => e.t >= 0)
@@ -156,6 +176,12 @@ await browser.close()
 const duration = frame / FPS
 console.log(`Vídeo: ${frame} fotogramas (${duration.toFixed(1)} s), ${events.length} efectos de sonido`)
 await writeFile(`${tmp}eventos.json`, JSON.stringify(events, null, 1))
+
+if (validateOnly) {
+  await writeFile(tmp + 'validacion.json', JSON.stringify({ duration, frames: frame, chapters, events: events.length, errors: pageErrors }, null, 2))
+  console.log('Guion correcto; fotogramas de control en ' + tmp)
+  process.exit(0)
+}
 
 const videoSource = reuse ? `${tmp}video-reutilizado.mp4` : tmpVideo
 if (reuse) await run(['-y', '-i', out, '-map', '0:v:0', '-c', 'copy', videoSource])
@@ -168,5 +194,5 @@ for (const [file, music, label] of [[out, true, 'con música'], [outFx, false, '
   await run(['-y', '-i', videoSource, '-i', tmpAudio, '-map', '0:v:0', '-map', '1:a:0', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', '-shortest', `${file}.part.mp4`])
   await rename(`${file}.part.mp4`, file)
 }
-if (!process.env.VIDEO_KEEP_TMP) await rm(tmp, { recursive: true, force: true })
+if (!process.env.VIDEO_KEEP_TMP) await cleanup()
 console.log(`Listo:\n  ${out}\n  ${outFx}`)

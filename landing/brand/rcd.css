@@ -1,0 +1,38 @@
+/* Referencia visual: https://www.rcd.legal/ (16 de octubre de 2026). */
+@import url('./fonts.css');
+
+:root {
+  --rcd-blue: #243588;
+  --rcd-blue-hover: #22328a;
+  --rcd-deep: #11183f;
+  --rcd-sky: #79bde1;
+  --rcd-sky-strong: #4792bd;
+  --rcd-accent-soft: #d7ebf6;
+  --rcd-soft: #eef5fa;
+  --rcd-page: #fafafa;
+  --rcd-surface: #fff;
+  --rcd-ink: #1d1d1b;
+  --rcd-body: #45474b;
+  --rcd-muted: #626365;
+  --rcd-line: #e6e9eb;
+  --rcd-on-blue: #e0ebf7;
+  --rcd-neutral: #eef0f4;
+  --rcd-chart-1: #bfd9ed;
+  --rcd-chart-2: #79bde1;
+  --rcd-chart-3: #5679bc;
+  --rcd-chart-4: #243588;
+  --rcd-chart-5: #11183f;
+  --rcd-success: #2c7a42;
+  --rcd-success-bg: #e3f4e6;
+  --rcd-font-body: 'Open Sans', Arial, Helvetica, sans-serif;
+  --rcd-font-heading: Quicksand, Arial, Helvetica, sans-serif;
+  --rcd-font-editorial: Arvo, Georgia, serif;
+}
+
+h1, h2, h3, h4, h5, h6, .display, .title, .title-sm {
+  font-family: var(--rcd-font-heading);
+}
+
+/* Recurso oficial intacto; el fondo blanco mantiene su legibilidad. */
+.rcd-logo { display: block; width: 52px; height: 52px; object-fit: contain; flex: none; background: #fff; }
+.rcd-logo-sm { width: 34px; height: 34px; }

@@ -10,11 +10,11 @@ const docs = computed(() => active.value.filter(item => item.portalSent && !item
 const revenue = computed(() => selected.value.filter(item => item.invoice.number).reduce((total, item) => total + item.invoice.amount, 0))
 const urgent = computed(() => active.value.filter(item => ['Incidencia', 'No apto'].includes(item.pbc) || item.extraction.state === 'Incidencia IT' || ['Rechazada', 'En revisión'].includes(item.ph.state)))
 const steps = computed(() => [
-  { label: 'Propuesta y firma', count: active.value.filter(item => !['Firmada', 'No necesaria'].includes(item.ph.state)).length, color: '#c2d6c9' },
-  { label: 'Validaciones y alta', count: active.value.filter(item => ['Firmada', 'No necesaria'].includes(item.ph.state) && !item.portalSent).length, color: '#96b9a2' },
-  { label: 'Documentación', count: active.value.filter(item => item.portalSent && !item.docsComplete).length, color: '#638b74' },
-  { label: 'Preparación y presentación', count: active.value.filter(item => item.docsComplete && item.tax.state !== 'Presentado').length, color: '#365e49' },
-  { label: 'Facturación y cierre', count: active.value.filter(item => item.tax.state === 'Presentado').length, color: '#b9d985' },
+  { label: 'Propuesta y firma', count: active.value.filter(item => !['Firmada', 'No necesaria'].includes(item.ph.state)).length, color: 'var(--rcd-chart-1)' },
+  { label: 'Validaciones y alta', count: active.value.filter(item => ['Firmada', 'No necesaria'].includes(item.ph.state) && !item.portalSent).length, color: 'var(--rcd-chart-2)' },
+  { label: 'Documentación', count: active.value.filter(item => item.portalSent && !item.docsComplete).length, color: 'var(--rcd-chart-3)' },
+  { label: 'Preparación y presentación', count: active.value.filter(item => item.docsComplete && item.tax.state !== 'Presentado').length, color: 'var(--rcd-chart-4)' },
+  { label: 'Facturación y cierre', count: active.value.filter(item => item.tax.state === 'Presentado').length, color: 'var(--rcd-chart-5)' },
 ])
 </script>
 

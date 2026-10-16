@@ -195,7 +195,7 @@
     siguiente(slide, tl) {
       tl.fromTo(slide.querySelectorAll('.nstep span'), { scale: 0, rotation: -90 }, { scale: 1, rotation: 0, duration: 0.7, ease: 'back.out(2.5)', stagger: 0.12 }, 1.1)
       sfxEach(tl, 'pop', 1.15, 3, 0.12)
-      ambient.push(gsap.to('#btnRequest', { boxShadow: '0 0 0 12px rgba(198, 226, 127, 0.45), 0 14px 30px -14px rgba(38, 76, 60, .9)', duration: 1.1, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: 2 }))
+      ambient.push(gsap.to('#btnRequest', { boxShadow: '0 0 0 12px rgba(121, 189, 225, 0.45), 0 14px 30px -14px rgba(36, 53, 136, .9)', duration: 1.1, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: 2 }))
     },
   }
 

@@ -1,15 +1,17 @@
 // Gráficos de la presentación (Chart.js). Se recrean al entrar en cada diapositiva para repetir la animación.
 (function () {
+  const style = getComputedStyle(document.documentElement)
+  const token = name => style.getPropertyValue(name).trim()
   const C = {
-    forest: '#264c3c',
-    forest2: '#1b3a2d',
-    lime: '#c6e27f',
-    lime2: '#a9cf5a',
-    mint: '#e3efe6',
-    sand: '#d9cdb3',
-    lav: '#9c8fd0',
-    muted: '#6c7a74',
-    grid: 'rgba(22, 36, 30, 0.07)',
+    forest: token('--rcd-blue'),
+    forest2: token('--rcd-deep'),
+    lime: token('--rcd-sky'),
+    lime2: token('--rcd-sky-strong'),
+    mint: token('--rcd-accent-soft'),
+    sand: token('--rcd-chart-1'),
+    lav: token('--rcd-chart-3'),
+    muted: token('--rcd-muted'),
+    grid: 'rgba(29, 29, 27, 0.07)',
   }
 
   Chart.defaults.font.family = getComputedStyle(document.documentElement).getPropertyValue('--font')
@@ -17,7 +19,7 @@
   Chart.defaults.color = C.muted
   Chart.defaults.plugins.legend.labels.usePointStyle = true
   Chart.defaults.plugins.legend.labels.boxWidth = 8
-  Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(16, 38, 29, 0.95)'
+  Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(17, 24, 63, 0.95)'
   Chart.defaults.plugins.tooltip.padding = 10
   Chart.defaults.plugins.tooltip.cornerRadius = 10
 
@@ -88,14 +90,14 @@
       data: {
         labels: ['Eficiencia', 'Trazabilidad', 'Experiencia cliente', 'Escalabilidad', 'Seguimiento', 'Visibilidad'],
         datasets: [
-          { label: 'Hoy', data: [2, 1, 2, 1.5, 2, 1], borderColor: C.sand, backgroundColor: 'rgba(217, 205, 179, 0.35)', pointBackgroundColor: C.sand, borderWidth: 2 },
-          { label: 'Escenario propuesto', data: [4.5, 5, 4.5, 4, 5, 5], borderColor: C.forest, backgroundColor: 'rgba(169, 207, 90, 0.35)', pointBackgroundColor: C.forest, borderWidth: 2 },
+          { label: 'Hoy', data: [2, 1, 2, 1.5, 2, 1], borderColor: C.sand, backgroundColor: 'rgba(191, 217, 237, 0.35)', pointBackgroundColor: C.sand, borderWidth: 2 },
+          { label: 'Escenario propuesto', data: [4.5, 5, 4.5, 4, 5, 5], borderColor: C.forest, backgroundColor: 'rgba(121, 189, 225, 0.35)', pointBackgroundColor: C.forest, borderWidth: 2 },
         ],
       },
       options: {
         animation: { duration: 1600, easing: 'easeOutQuart' },
         plugins: { legend: { position: 'bottom' } },
-        scales: { r: { min: 0, max: 5, ticks: { display: false, stepSize: 1 }, grid: { color: C.grid }, angleLines: { color: C.grid }, pointLabels: { font: { size: 11 }, color: '#3c4a44' } } },
+        scales: { r: { min: 0, max: 5, ticks: { display: false, stepSize: 1 }, grid: { color: C.grid }, angleLines: { color: C.grid }, pointLabels: { font: { size: 11 }, color: '#45474b' } } },
       },
     })
   }
@@ -158,7 +160,7 @@
         },
         scales: {
           x: { min: 0, max: 15, grid: { color: C.grid }, border: { display: false }, ticks: { stepSize: 1, callback: (v) => (v === 0 ? '' : `S${v}`) } },
-          y: { grid: { display: false }, border: { display: false }, ticks: { color: '#3c4a44', font: { size: 12.5 } } },
+          y: { grid: { display: false }, border: { display: false }, ticks: { color: '#45474b', font: { size: 12.5 } } },
         },
       },
       plugins: [milestones],

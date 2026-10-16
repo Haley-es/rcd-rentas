@@ -6,6 +6,10 @@ Mockup interactivo de la digitalización de campañas de Renta y Modelo 720, con
 
 El [PRD 11: aplicación final y puesta en producción](docs/prds/todo/11-aplicacion-final-y-puesta-en-produccion.md) recoge el trabajo pendiente, incluido el registro de clientes, las prioridades, las decisiones que debe aprobar RCD y los criterios de aceptación. Es una hoja de ruta, no funcionalidad implementada.
 
+## Identidad visual
+
+Aplicación, landing y presentación comparten la paleta azul y celeste y las fuentes locales Quicksand, Open Sans y Arvo de la web de RCD. [Identidad visual](docs/identidad-visual.md) documenta los criterios y la sincronización de recursos.
+
 ## Puesta en marcha
 
 Requiere Node.js `^22.19.0`, `^24.11.0` o `>=26` y pnpm `11.2.0`. Validado con Node `24.18.0`. El comando de reconciliación utiliza los hooks y el soporte TypeScript nativo de Node 24; usa Node 24 para esta entrega.

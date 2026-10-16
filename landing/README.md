@@ -2,6 +2,10 @@
 
 Página estática e independiente para que los clientes de RCD contraten el servicio de preparación y presentación de la declaración de la Renta y del Modelo 720. No necesita servidor, build ni conexión: abre [index.html](index.html) en el navegador.
 
+## Identidad visual
+
+Paleta azul y celeste de RCD; títulos Quicksand, textos Open Sans y destacados Arvo. Fuentes, licencias y estilos comunes incluidos en `brand/`, sin peticiones externas. Para actualizarlos desde el repositorio, ejecutar `node scripts/sync-brand.mjs`. [Criterios de identidad](../docs/identidad-visual.md).
+
 ## Contenido
 
 1. Portada con la propuesta de valor y una vista del portal del cliente.

@@ -3,7 +3,7 @@ import { definePreset } from '@primeuix/themes'
 
 const RcdTheme = definePreset(Aura, {
   semantic: {
-    primary: { 50: '#f0f7f2', 100: '#dcebe1', 200: '#bad6c5', 300: '#90b59f', 400: '#648c75', 500: '#365e49', 600: '#284c39', 700: '#1e3b2e', 800: '#193227', 900: '#14281f', 950: '#0b1911' },
+    primary: { 50: '#f0f4fc', 100: '#e2e9f8', 200: '#c6d5ee', 300: '#9cb8e0', 400: '#638bcc', 500: '#243588', 600: '#22328a', 700: '#1c2a73', 800: '#17225e', 900: '#121b49', 950: '#0d1233' },
   },
 })
 
@@ -42,6 +42,7 @@ export default defineNuxtConfig({
     head: {
       title: 'RCD · Campañas fiscales',
       htmlAttrs: { lang: 'es' },
+      link: [{ rel: 'stylesheet', href: '/brand/rcd.css' }, { rel: 'icon', href: '/brand/rcd-logo.png', type: 'image/png' }],
       meta: [
         { name: 'description', content: 'Prototipo interactivo de gestión de campañas de Renta y Modelo 720. Datos ficticios.' },
       ],

@@ -60,6 +60,7 @@ const context = await browser.newContext({ viewport, deviceScaleFactor: 1, local
 const page = await context.newPage()
 
 await page.goto(`${base}/login`, { waitUntil: 'networkidle' })
+await page.evaluate(() => document.fonts.ready)
 await page.waitForTimeout(800)
 await page.screenshot({ path: `${out}login.png` })
 await measure(page, 'login', { usuario: page.locator('#username'), clave: page.locator('#password'), entrar: page.locator('button[type=submit]') })
@@ -74,6 +75,8 @@ await page.waitForURL((url) => !/\/(login|mfa)/.test(url.pathname))
 
 for (const shot of shots) {
   await page.goto(`${base}${shot.path}`, { waitUntil: 'networkidle' })
+  await page.locator('[data-app-ready="true"]').waitFor()
+  await page.evaluate(() => document.fonts.ready)
   await page.addStyleTag({ content: hideTechnicalPanels })
   await page.waitForTimeout(500)
   if (shot.tab) {
