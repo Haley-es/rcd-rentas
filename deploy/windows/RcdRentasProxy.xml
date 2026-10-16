@@ -1,0 +1,20 @@
+<service>
+  <id>RcdRentasProxy</id>
+  <name>RCD Rentas HTTPS</name>
+  <description>Caddy para la demo rentas.haley.es.</description>
+  <executable>C:\caddy\caddy.exe</executable>
+  <arguments>run --config "C:\caddy\Caddyfile" --adapter caddyfile</arguments>
+  <workingdirectory>C:\caddy</workingdirectory>
+  <serviceaccount>
+    <domain>NT AUTHORITY</domain>
+    <user>LocalService</user>
+  </serviceaccount>
+  <startmode>Automatic</startmode>
+  <onfailure action="restart" delay="10 sec" />
+  <stoptimeout>30 sec</stoptimeout>
+  <logpath>%BASE%\logs</logpath>
+  <log mode="roll-by-size">
+    <sizeThreshold>10240</sizeThreshold>
+    <keepFiles>5</keepFiles>
+  </log>
+</service>

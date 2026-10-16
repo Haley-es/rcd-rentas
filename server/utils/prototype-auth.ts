@@ -6,7 +6,7 @@ import type { PrototypeAuthErrorCode, PrototypeSession } from '../../shared/type
 import { useRuntimeConfig } from '#imports'
 import type { AccessRole } from '../../shared/types/access-role'
 import { resolvePrototypeAccessRole } from './prototype-access-role'
-import { isPrototypeLocalHostname } from '../../shared/utils/prototype-local-host'
+import { parsePrototypeDemoOrigin, prototypeMfaUrlAllowed, prototypeRequestUrl } from './prototype-demo-origin'
 import {
   createPrototypeAuthStore, PROTOTYPE_CHALLENGE_TTL_MS, PROTOTYPE_SESSION_TTL_MS,
 } from './prototype-auth-store'
@@ -23,6 +23,7 @@ export const PROTOTYPE_CHALLENGE_COOKIE = 'rcd-prototype-challenge'
 const trustedServerContexts = new WeakMap<H3Event, number>()
 
 const config = useRuntimeConfig().prototypeAuth
+const demoOrigin = parsePrototypeDemoOrigin(config.demoOrigin)
 function testTtl(value: number, normal: number) {
   if (!import.meta.dev || config.e2e !== true) return normal
   if (!Number.isSafeInteger(value) || value <= 0) throw new Error('TTL E2E debe ser un entero positivo.')
@@ -39,7 +40,7 @@ function failure(statusCode: number, code: PrototypeAuthErrorCode, message: stri
 }
 
 function requestUrl(event: H3Event) {
-  return getRequestURL(event, { xForwardedHost: false, xForwardedProto: false })
+  return prototypeRequestUrl(getRequestURL(event, { xForwardedHost: false, xForwardedProto: false }), demoOrigin)
 }
 
 function cookieOptions(event: H3Event) {
@@ -135,8 +136,8 @@ export async function beginPrototypeLogin(event: H3Event, username: string, pass
 }
 
 export function completePrototypeMfa(event: H3Event): PrototypeSession {
-  if (!isPrototypeLocalHostname(requestUrl(event).hostname)) {
-    failure(403, 'MFA_LOCAL_ONLY', 'El MFA simulado solo está disponible en localhost.')
+  if (!prototypeMfaUrlAllowed(requestUrl(event), demoOrigin)) {
+    failure(403, 'MFA_LOCAL_ONLY', 'El MFA simulado solo está disponible en localhost o en el dominio configurado para la demo.')
   }
   const session = store.consume(getCookie(event, PROTOTYPE_CHALLENGE_COOKIE))
   if (!session) {

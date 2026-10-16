@@ -34,7 +34,7 @@ Configura también `PROTOTYPE_UPLOAD_DIR=C:\work\RCD.Rentas.blobs`, ruta absolut
 
 Abrir `http://127.0.0.1:3010`. Desarrollo y preview usan **3010** y escuchan únicamente en la interfaz local. Las pruebas usan servidores y una BD separados.
 
-El acceso pasa por `/login` y `/mfa`. Todos los usuarios tienen un permiso de acceso: **Empleado** o **Administrador IT**, independiente del rol de negocio simulado. Las cuentas configuradas requieren su contraseña, comprobada en servidor. Los demás usuarios acceden como empleados de demostración con usuario y contraseña no vacíos. El MFA acepta cualquier código no vacío únicamente en `localhost`, `127.0.0.1` o `::1`; en otros hosts queda bloqueado. La identidad y el MFA siguen simulados: no es autenticación de producción y no deben introducirse credenciales corporativas.
+El acceso pasa por `/login` y `/mfa`. Todos los usuarios tienen un permiso de acceso: **Empleado** o **Administrador IT**, independiente del rol de negocio simulado. Las cuentas configuradas requieren su contraseña, comprobada en servidor. Los demás usuarios acceden como empleados de demostración con usuario y contraseña no vacíos. Por defecto, el MFA acepta cualquier código no vacío únicamente en `localhost`, `127.0.0.1` o `::1`. La variable privada `NUXT_PROTOTYPE_AUTH_DEMO_ORIGIN` permite también el origen HTTPS exacto de una demo alojada, conservando los mismos usuarios y MFA simulado. La identidad y el MFA siguen simulados: no es autenticación de producción y no deben introducirse credenciales corporativas.
 
 `pnpm db:seed` configura `admin` como Administrador IT y `empleado` como Empleado, ambos con contraseña `localtest`. Sus permisos y pruebas están en [Usuarios de demostración](docs/usuarios-demo.md). El seed es explícito e idempotente: actualiza el antiguo seed público, conserva credenciales personalizadas y no reinicia datos. Guarda ambos usuarios y hashes scrypt en la configuración privada `.env`. Para configurar un administrador con contraseña aleatoria, ejecuta `node scripts/prototype-admin.mjs <usuario>`, conserva la contraseña que muestra una sola vez y reinicia el servidor. Sin configuración no hay administradores; una contraseña incorrecta o una configuración incompleta deniegan el acceso de esa cuenta. Reiniciar Nitro revoca sesiones anteriores. El selector «Simular rol» nunca cambia estos permisos.
 
@@ -54,6 +54,61 @@ pnpm preview
 Los tests E2E usan exclusivamente `RCDRentaE2E` en localhost, con las mismas migraciones. Nunca reinician los datos de `RCDRenta`. Un administrador local puede provisionar la BD de pruebas y dar acceso al login SQL existente mediante `powershell -File scripts\provision-prototype-e2e.ps1`; el script usa los permisos del principal Windows actual, no almacena credenciales y no altera los permisos de desarrollo. Si no dispone de esos permisos, la preparación debe realizarla un administrador. `pnpm db:e2e:deploy` comprueba la conexión y aplica las migraciones. `PROTOTYPE_E2E_DATABASE_URL` permite configurar de forma privada otra conexión, pero sigue exigiendo localhost y exactamente el nombre `RCDRentaE2E`.
 
 La regresión y las suites de persistencia/archivos usan **3011**, build separado, carpeta privada `node_modules\.cache\prototype-files-e2e` y `workers: 1`; no reutilizan servidores ajenos. Se ejecutan secuencialmente porque comparten la BD E2E. `pnpm test:e2e:persistence` ejecuta 09, 10 e historial/papelera; `pnpm exec playwright test --config playwright.prototype.config.ts prototype-09-persistence.spec.ts` selecciona 09 y `pnpm exec playwright test --config playwright.prototype.config.ts prototype-history.spec.ts` selecciona historial/papelera. `pnpm exec playwright test app.spec.ts prototype-08-auth.spec.ts` selecciona la regresión histórica y auth. Los argumentos de Playwright son expresiones de selección, no rutas Windows: utiliza estos nombres. La caducidad usa además **3012** con TTL cortos solo en su fixture. Los fixtures detienen exclusivamente sus procesos identificados. En Windows, generar Prisma mientras Nitro carga su DLL puede dar EPERM: detén únicamente el servidor propio, genera y vuelve a arrancarlo. Nunca mates procesos por nombre.
+
+## Demo en Windows con dominio y HTTPS
+
+Este despliegue conserva los usuarios de demostración y el MFA falso. La aplicación y SQL Server comparten servidor. Los ejemplos usan `C:\apps\RCD.Rentas`, archivos privados en `C:\data\RCD.Rentas.blobs` y Node instalado en `%ProgramFiles%\nodejs\node.exe`; comprueba la ruta con `(Get-Command node).Source` y ajusta las plantillas si utilizas otras carpetas.
+
+1. Añade `NUXT_PROTOTYPE_AUTH_DEMO_ORIGIN=https://rentas.haley.es` al `.env` privado y ejecuta `pnpm.cmd build`. La configuración admite únicamente un origen HTTPS, sin ruta, usuario, query ni fragmento. Localhost continúa funcionando. Otros hosts siguen rechazados por MFA.
+2. Descarga [Caddy para Windows amd64](https://caddyserver.com/download) en `C:\caddy\caddy.exe` y [WinSW 2.12.0 x64](https://github.com/winsw/winsw/releases/tag/v2.12.0). Las plantillas usan el formato de WinSW 2.x.
+3. Crea las carpetas y copia las plantillas desde la raíz del proyecto. Todos los comandos de servicios y permisos se ejecutan en PowerShell como administrador:
+
+```powershell
+New-Item -ItemType Directory -Force -Path C:\services\RcdRentas\logs, C:\services\RcdRentasProxy\logs, C:\caddy
+Copy-Item deploy\windows\RcdRentas.xml C:\services\RcdRentas\RcdRentas.xml
+Copy-Item deploy\windows\RcdRentasProxy.xml C:\services\RcdRentasProxy\RcdRentasProxy.xml
+Copy-Item deploy\windows\Caddyfile C:\caddy\Caddyfile
+```
+
+Copia el ejecutable descargado de WinSW dos veces, con los nombres `C:\services\RcdRentas\RcdRentas.exe` y `C:\services\RcdRentasProxy\RcdRentasProxy.exe`. Cada ejecutable carga su XML del mismo nombre.
+
+4. Ambas plantillas usan la cuenta integrada LocalService, cuyo SID es independiente del idioma de Windows. Concede lectura de la aplicación y escritura únicamente en sus archivos privados y logs:
+
+```powershell
+icacls C:\apps\RCD.Rentas /grant '*S-1-5-19:(OI)(CI)RX'
+icacls C:\apps\RCD.Rentas\.env /grant '*S-1-5-19:R'
+icacls C:\data\RCD.Rentas.blobs /grant '*S-1-5-19:(OI)(CI)M'
+icacls C:\services\RcdRentas /grant '*S-1-5-19:(OI)(CI)RX'
+icacls C:\services\RcdRentas\logs /grant '*S-1-5-19:(OI)(CI)M'
+icacls C:\services\RcdRentasProxy /grant '*S-1-5-19:(OI)(CI)RX'
+icacls C:\services\RcdRentasProxy\logs /grant '*S-1-5-19:(OI)(CI)M'
+icacls C:\caddy /grant '*S-1-5-19:(OI)(CI)RX'
+```
+
+5. Detén con Ctrl+C el proceso Node que arrancaste manualmente. Instala e inicia el servicio de la aplicación:
+
+```powershell
+C:\services\RcdRentas\RcdRentas.exe install
+C:\services\RcdRentas\RcdRentas.exe start
+Get-Service RcdRentas
+```
+
+Comprueba login, MFA y expedientes en `http://127.0.0.1:3010`. Los logs quedan en `C:\services\RcdRentas\logs`. Los cambios del `.env` se aplican reiniciando este servicio.
+
+6. En el proveedor DNS de `haley.es`, crea el registro A `rentas` hacia la IPv4 pública del servidor. Si está detrás de un router, redirige TCP 80 y 443 hacia ese Windows. Si existe un firewall adicional del proveedor, permite esos mismos puertos. El puerto 3010 queda en loopback y SQL sigue conectando localmente.
+
+```powershell
+New-NetFirewallRule -DisplayName 'RCD Rentas HTTP HTTPS' -Direction Inbound -Action Allow -Protocol TCP -LocalPort 80,443 -Profile Any
+C:\caddy\caddy.exe validate --config C:\caddy\Caddyfile --adapter caddyfile
+C:\services\RcdRentasProxy\RcdRentasProxy.exe install
+C:\services\RcdRentasProxy\RcdRentasProxy.exe start
+```
+
+Caddy obtiene y renueva el certificado cuando el DNS y la entrada pública están preparados. Conserva el Host original; no reescribas `Origin` ni `Set-Cookie`. La aplicación reconoce el origen HTTPS configurado, exige el mismo origen en mutaciones y emite cookies Secure para ese dominio sin confiar en cabeceras forwarded del cliente. Los certificados se guardan en el perfil de LocalService; los logs del proxy están en `C:\services\RcdRentasProxy\logs`.
+
+7. Desde otro equipo, abre `https://rentas.haley.es`, completa el login demo y cualquier MFA no vacío, y comprueba expedientes, una modificación y una descarga. El administrador configurado conserva su contraseña y permisos; los usuarios no configurados siguen siendo empleados de demostración. Cada reinicio de Node exige repetir el acceso.
+
+Para actualizar, detén el servicio de la aplicación, ejecuta `git pull --ff-only origin develop`, `pnpm.cmd install --frozen-lockfile`, `pnpm.cmd db:generate` y `pnpm.cmd build`, y arráncalo de nuevo. Si hay nuevas migraciones, aplica `pnpm.cmd db:deploy` con el principal de migraciones y restablece la conexión de runtime antes de arrancar. Conserva `.env`, BD y blobs; no ejecutes reset ni seed como parte de la actualización. El procedimiento de backup conjunto de esta guía también se aplica a esta demo.
 
 ## Qué se puede explorar
 

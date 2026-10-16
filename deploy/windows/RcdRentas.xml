@@ -1,0 +1,23 @@
+<service>
+  <id>RcdRentas</id>
+  <name>RCD Rentas Demo</name>
+  <description>Prototipo RCD con usuarios de demostracion y MFA simulado.</description>
+  <executable>%ProgramFiles%\nodejs\node.exe</executable>
+  <arguments>--env-file="C:\apps\RCD.Rentas\.env" "C:\apps\RCD.Rentas\.output\server\index.mjs"</arguments>
+  <workingdirectory>C:\apps\RCD.Rentas</workingdirectory>
+  <env name="NODE_ENV" value="production" />
+  <env name="NITRO_HOST" value="127.0.0.1" />
+  <env name="NITRO_PORT" value="3010" />
+  <serviceaccount>
+    <domain>NT AUTHORITY</domain>
+    <user>LocalService</user>
+  </serviceaccount>
+  <startmode>Automatic</startmode>
+  <onfailure action="restart" delay="10 sec" />
+  <stoptimeout>30 sec</stoptimeout>
+  <logpath>%BASE%\logs</logpath>
+  <log mode="roll-by-size">
+    <sizeThreshold>10240</sizeThreshold>
+    <keepFiles>5</keepFiles>
+  </log>
+</service>
